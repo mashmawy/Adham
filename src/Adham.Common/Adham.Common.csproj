@@ -2,4 +2,7 @@
   <PropertyGroup>
     <RootNamespace>Adham.Common</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Adham.Common.Tests" />
+  </ItemGroup>
 </Project>

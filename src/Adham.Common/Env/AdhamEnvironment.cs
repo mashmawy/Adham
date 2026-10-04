@@ -9,6 +9,13 @@ public sealed class AdhamEnvironment
 
     public AdhamEnvironment(Func<string, string?> read) => _read = read;
 
+    // Real environment variables win; the nearest .env file fills in the rest.
+    public static AdhamEnvironment FromProcessAndDotEnv(string startDir) =>
+        Layered(Environment.GetEnvironmentVariable, DotEnv.Load(DotEnv.Find(startDir)));
+
+    internal static AdhamEnvironment Layered(Func<string, string?> process, IReadOnlyDictionary<string, string> file) =>
+        new(name => process(name) is { Length: > 0 } fromProcess ? fromProcess : file.GetValueOrDefault(name));
+
     // OpenAI-compatible base URL, including /v1. Default: Unsloth Studio on its default port.
     public Uri BaseUrl
     {

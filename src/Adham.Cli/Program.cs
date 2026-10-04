@@ -6,10 +6,10 @@ using Adham.Tools.Files;
 using Adham.Tools.Search;
 using Microsoft.Extensions.AI;
 
-var env = new AdhamEnvironment();
+var env = AdhamEnvironment.FromProcessAndDotEnv(Directory.GetCurrentDirectory());
 if (string.IsNullOrWhiteSpace(env.ApiKey))
 {
-    Console.Error.WriteLine("Set ADHAM_API_KEY to your Unsloth Studio key (Settings → API, starts with sk-unsloth-).");
+    Console.Error.WriteLine("Set ADHAM_API_KEY (environment variable or a git-ignored .env file) to your Unsloth Studio key (Settings → API, starts with sk-unsloth-).");
     return 1;
 }
 

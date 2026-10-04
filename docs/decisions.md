@@ -60,3 +60,9 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Decision**: `AgentSession` appends every message of a turn, including the assistant's tool calls and the tool results, not just the final text.
 - **Why**: Otherwise the next turn has no record of which files the model already read and what was in them, so it reads them again or guesses.
 - **Alternatives considered**: Keeping only the final answer (smaller context, but forgetful), or a sliding window over old tool results. That window is the likely answer once long sessions hit the context limit, and is left for later.
+
+## 2026-10-04: Local settings live in a git-ignored .env file
+
+- **Decision**: The CLI reads `ADHAM_*` settings from the nearest `.env` file (the working directory or any parent), with real environment variables taking precedence. `.env` is git-ignored; `.env.example` is committed.
+- **Why**: Typing the API key into every new terminal is friction, and putting it in a tracked file is a leak waiting to happen. Walking up the parents means `adham` finds the file from any subfolder of the repo.
+- **Alternatives considered**: `dotnet user-secrets` (tied to one project and needs the SDK at run time), or a user-wide `~/.adham` config (the right home once there are more settings than a key).

@@ -22,12 +22,14 @@ Adham is being rebuilt from an earlier prototype, one layer per episode. Every e
 
 1. Start Unsloth Studio and load a model.
 2. Create an API key in Studio (**Settings → API**); it starts with `sk-unsloth-`.
-3. Run Adham:
+3. Put the key in a local `.env` file (git-ignored) at the repo root:
 
 ```powershell
-$env:ADHAM_API_KEY = "sk-unsloth-..."
+Copy-Item .env.example .env   # then edit ADHAM_API_KEY in .env
 dotnet run --project src/Adham.Cli
 ```
+
+Adham reads the nearest `.env` in the folder it runs from or any parent folder. Environment variables override it (`$env:ADHAM_API_KEY = "..."`).
 
 | Variable | Default | Meaning |
 |---|---|---|
