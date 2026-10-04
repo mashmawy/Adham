@@ -23,7 +23,7 @@ public sealed class GlobTool(WorkingDirectory cwd) : ITool
     public bool IsReadOnly => true;
 
     public AIFunction AsAIFunction() =>
-        AIFunctionFactory.Create(Execute, Name, Description);
+        ToolFunction.Create(Execute, Name, Description);
 
     internal string Execute(
         [Description("Glob pattern, e.g. \"**/*.cs\".")] string pattern,

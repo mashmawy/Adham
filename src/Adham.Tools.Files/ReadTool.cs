@@ -23,7 +23,7 @@ public sealed class ReadTool(WorkingDirectory cwd) : ITool
     public bool IsReadOnly => true;
 
     public AIFunction AsAIFunction() =>
-        AIFunctionFactory.Create(ExecuteAsync, Name, Description);
+        ToolFunction.Create(ExecuteAsync, Name, Description);
 
     // Parameter names are snake_case on purpose: they become the JSON schema the model sees.
 #pragma warning disable CA1707
