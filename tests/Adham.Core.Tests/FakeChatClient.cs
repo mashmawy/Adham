@@ -18,8 +18,12 @@ public sealed class FakeChatClient(Func<IEnumerable<ChatMessage>, IAsyncEnumerab
 
     public void Dispose() { }
 
-    public static async IAsyncEnumerable<ChatResponseUpdate> StreamText(
-        string text, [EnumeratorCancellation] CancellationToken ct = default)
+    public static IAsyncEnumerable<ChatResponseUpdate> StreamText(string text) =>
+        StreamTextEndingWith(text, ChatFinishReason.Stop);
+
+    // Like a real server: text in chunks, then a final chunk carrying the finish reason (or none at all).
+    public static async IAsyncEnumerable<ChatResponseUpdate> StreamTextEndingWith(
+        string text, ChatFinishReason? finishReason, [EnumeratorCancellation] CancellationToken ct = default)
     {
         foreach (var chunk in text.Chunk(8))
         {
@@ -27,12 +31,18 @@ public sealed class FakeChatClient(Func<IEnumerable<ChatMessage>, IAsyncEnumerab
             yield return new ChatResponseUpdate(ChatRole.Assistant, new string(chunk));
             await Task.Yield();
         }
+
+        if (finishReason is not null)
+            yield return new ChatResponseUpdate { Role = ChatRole.Assistant, FinishReason = finishReason };
     }
 
     public static async IAsyncEnumerable<ChatResponseUpdate> StreamToolCall(
         string callId, string name, Dictionary<string, object?> args)
     {
-        yield return new ChatResponseUpdate(ChatRole.Assistant, [new FunctionCallContent(callId, name, args)]);
+        yield return new ChatResponseUpdate(ChatRole.Assistant, [new FunctionCallContent(callId, name, args)])
+        {
+            FinishReason = ChatFinishReason.ToolCalls,
+        };
         await Task.Yield();
     }
 }

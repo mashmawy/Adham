@@ -65,6 +65,8 @@ while (!cts.IsCancellationRequested)
             Console.Write(update.Text);
         }
         Console.WriteLine();
+        if (session.LastTurn?.Note is { } note)
+            WriteDim($"  ({note})\n");
     }
     catch (Exception ex) when (ServerErrors.IsServerError(ex))
     {

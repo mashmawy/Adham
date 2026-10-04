@@ -20,6 +20,9 @@ public sealed class AgentSession
 
     public IReadOnlyList<ChatMessage> History => _history;
 
+    // How the most recent completed turn ended (null before the first one).
+    public TurnOutcome? LastTurn { get; private set; }
+
     // Start over: keep the system prompt, forget the conversation (and everything the tools returned).
     public void Clear()
     {
@@ -40,15 +43,18 @@ public sealed class AgentSession
             // With tools, one turn can be several model calls:
             // assistant asks for a tool → tool result → assistant answers.
             var updates = new List<ChatResponseUpdate>();
+            var outcome = new TurnOutcome.Tracker();
             await foreach (var update in _client.GetStreamingResponseAsync(_history, _options, ct).ConfigureAwait(false))
             {
                 updates.Add(update);
+                outcome.Observe(update);
                 yield return update;
             }
 
             // Keep the whole exchange, tool calls and results included, so the next turn
             // knows what the model already looked at.
             _history.AddMessages(updates);
+            LastTurn = outcome.Result;
             completed = true;
         }
         finally
