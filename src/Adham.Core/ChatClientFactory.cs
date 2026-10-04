@@ -12,7 +12,10 @@ public static class ChatClientFactory
     public static IChatClient Build(Uri baseUrl, string apiKey, string modelId)
     {
         var openAi = CreateClient(baseUrl, apiKey);
-        return new ChatClientBuilder(openAi.GetChatClient(modelId).AsIChatClient()).Build();
+        return new ChatClientBuilder(openAi.GetChatClient(modelId).AsIChatClient())
+            // The tool loop: when the model asks for a tool, run it, append the result, ask again.
+            .UseFunctionInvocation()
+            .Build();
     }
 
     // The model the server can answer with right now, from GET /v1/models.

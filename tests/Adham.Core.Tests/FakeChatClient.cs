@@ -28,4 +28,11 @@ public sealed class FakeChatClient(Func<IEnumerable<ChatMessage>, IAsyncEnumerab
             await Task.Yield();
         }
     }
+
+    public static async IAsyncEnumerable<ChatResponseUpdate> StreamToolCall(
+        string callId, string name, Dictionary<string, object?> args)
+    {
+        yield return new ChatResponseUpdate(ChatRole.Assistant, [new FunctionCallContent(callId, name, args)]);
+        await Task.Yield();
+    }
 }

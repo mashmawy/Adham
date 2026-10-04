@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using System.Text;
 using Microsoft.Extensions.AI;
 
 namespace Adham.Core;
@@ -27,14 +26,17 @@ public sealed class AgentSession
     {
         _history.Add(new ChatMessage(ChatRole.User, text));
 
-        var reply = new StringBuilder();
+        // With tools, one turn can be several model calls:
+        // assistant asks for a tool → tool result → assistant answers.
+        var updates = new List<ChatResponseUpdate>();
         await foreach (var update in _client.GetStreamingResponseAsync(_history, _options, ct).ConfigureAwait(false))
         {
-            reply.Append(update.Text);
+            updates.Add(update);
             yield return update;
         }
 
-        if (reply.Length > 0)
-            _history.Add(new ChatMessage(ChatRole.Assistant, reply.ToString()));
+        // Keep the whole exchange, tool calls and results included, so the next turn
+        // knows what the model already looked at.
+        _history.AddMessages(updates);
     }
 }
