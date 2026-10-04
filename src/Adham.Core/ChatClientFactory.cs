@@ -1,4 +1,6 @@
 using System.ClientModel;
+using System.ClientModel.Primitives;
+using System.Text.Json;
 using Microsoft.Extensions.AI;
 using OpenAI;
 
@@ -13,11 +15,28 @@ public static class ChatClientFactory
         return new ChatClientBuilder(openAi.GetChatClient(modelId).AsIChatClient()).Build();
     }
 
-    // The model currently loaded on the server: first entry of GET /v1/models.
+    // The model the server can answer with right now, from GET /v1/models.
     public static async Task<string?> GetLoadedModelAsync(Uri baseUrl, string apiKey, CancellationToken ct)
     {
-        var models = await CreateClient(baseUrl, apiKey).GetOpenAIModelClient().GetModelsAsync(ct).ConfigureAwait(false);
-        return models.Value.FirstOrDefault()?.Id;
+        // Raw JSON on purpose: the SDK's model type drops Unsloth Studio's "loaded" flag.
+        var result = await CreateClient(baseUrl, apiKey).GetOpenAIModelClient()
+            .GetModelsAsync(new RequestOptions { CancellationToken = ct }).ConfigureAwait(false);
+        return PickLoadedModel(result.GetRawResponse().Content.ToString());
+    }
+
+    // Unsloth Studio lists every downloaded model and marks the one in memory with "loaded": true.
+    // Servers without that flag list only what they serve, so their first entry is the answer.
+    internal static string? PickLoadedModel(string modelsJson)
+    {
+        using var doc = JsonDocument.Parse(modelsJson);
+        var models = doc.RootElement.GetProperty("data").EnumerateArray().ToList();
+
+        var hasLoadedFlag = models.Exists(m => m.TryGetProperty("loaded", out _));
+        var pick = hasLoadedFlag
+            ? models.Find(m => m.TryGetProperty("loaded", out var loaded) && loaded.ValueKind == JsonValueKind.True)
+            : models.FirstOrDefault();
+
+        return pick.ValueKind == JsonValueKind.Object ? pick.GetProperty("id").GetString() : null;
     }
 
     private static OpenAIClient CreateClient(Uri baseUrl, string apiKey) =>

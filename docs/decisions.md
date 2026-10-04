@@ -32,7 +32,7 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 
 ## 2026-10-04: Use the model the server has loaded unless one is named
 
-- **Decision**: When `ADHAM_MODEL` is unset, the CLI asks the server (`GET /v1/models`) and uses the first model it reports.
+- **Decision**: When `ADHAM_MODEL` is unset, the CLI asks the server (`GET /v1/models`) and uses the model it can answer with right now: the one Unsloth Studio marks `"loaded": true`, or the first entry on servers that don't send that flag. (Corrected 2026-10-04: the first version took the first entry, but Studio lists every *downloaded* model, so it picked unloaded ones.)
 - **Why**: In Unsloth Studio you pick the model in the UI; making the user copy its id into an environment variable as well is friction with no benefit.
 - **Alternatives considered**: A hard-coded default model id, which breaks as soon as a different model is loaded.
 
