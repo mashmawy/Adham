@@ -48,15 +48,48 @@ public class TurnOutcomeTests
     [Fact]
     public async Task NothingAfterTheToolResult_IsReported()
     {
-        // The model calls a tool, gets the result, then ends the turn without saying anything.
+        // The model calls a tool, gets the result, then ends the turn without saying anything (nudge included).
         var session = await RunTurn(messages =>
-            messages.Last().Role == ChatRole.Tool
-                ? FakeChatClient.StreamTextEndingWith("", ChatFinishReason.Stop)
-                : FakeChatClient.StreamToolCall("call-1", "Glob", []));
+            messages.Last().Role == ChatRole.User && messages.Last().Text != AgentSession.AnswerNudge
+                ? FakeChatClient.StreamToolCall("call-1", "Glob", [])
+                : FakeChatClient.StreamTextEndingWith("", ChatFinishReason.Stop));
 
         session.LastTurn!.ToolCalls.Should().Be(1);
         session.LastTurn.EndedWithText.Should().BeFalse();
         session.LastTurn.Note.Should().Contain("after the tool call");
+    }
+
+    [Fact]
+    public async Task SilentAfterTool_IsNudgedOnce_AndTheNudgeIsNotKeptInHistory()
+    {
+        // Seen live: Glob ran, then the model ended its turn (finish: stop) with no text.
+        var session = await RunTurn(messages =>
+            messages.Last().Role == ChatRole.User && messages.Last().Text == AgentSession.AnswerNudge
+                ? FakeChatClient.StreamText("Here are the files: README.md")
+                : messages.Last().Role == ChatRole.Tool
+                    ? FakeChatClient.StreamTextEndingWith("", ChatFinishReason.Stop)
+                    : FakeChatClient.StreamToolCall("call-1", "Glob", []));
+
+        session.LastTurn!.Nudges.Should().Be(1);
+        session.LastTurn.EndedWithText.Should().BeTrue();
+        session.LastTurn.Note.Should().Contain("nudged");
+        session.History.Should().NotContain(m => m.Text == AgentSession.AnswerNudge);
+        session.History[^1].Text.Should().Be("Here are the files: README.md");
+    }
+
+    [Fact]
+    public async Task StillSilentAfterTheNudge_GivesUp_AndSaysSo()
+    {
+        // Calls the tool for the user's request, then stays silent, even when nudged.
+        var session = await RunTurn(messages =>
+            messages.Last().Role == ChatRole.User && messages.Last().Text != AgentSession.AnswerNudge
+                ? FakeChatClient.StreamToolCall("call-1", "Glob", [])
+                : FakeChatClient.StreamTextEndingWith("", ChatFinishReason.Stop));
+
+        session.LastTurn!.Nudges.Should().Be(1);
+        session.LastTurn.EndedWithText.Should().BeFalse();
+        session.LastTurn.Note.Should().Contain("without answering");
+        session.History.Should().NotContain(m => m.Text == AgentSession.AnswerNudge);
     }
 
     [Fact]

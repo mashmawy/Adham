@@ -10,6 +10,10 @@ public sealed class AgentSession
     private readonly ChatOptions _options;
     private readonly List<ChatMessage> _history = [];
 
+    // Sent (once, and never kept in history) when the model runs a tool and then ends its turn without a word.
+    public const string AnswerNudge =
+        "You ran tools but haven't answered yet. Using the tool results above, answer my previous request now.";
+
     public AgentSession(IChatClient client, ChatOptions options, string? systemPrompt = null)
     {
         _client = client;
@@ -42,18 +46,34 @@ public sealed class AgentSession
         {
             // With tools, one turn can be several model calls:
             // assistant asks for a tool → tool result → assistant answers.
-            var updates = new List<ChatResponseUpdate>();
             var outcome = new TurnOutcome.Tracker();
-            await foreach (var update in _client.GetStreamingResponseAsync(_history, _options, ct).ConfigureAwait(false))
+            while (true)
             {
-                updates.Add(update);
-                outcome.Observe(update);
-                yield return update;
+                var updates = new List<ChatResponseUpdate>();
+                await foreach (var update in _client.GetStreamingResponseAsync(_history, _options, ct).ConfigureAwait(false))
+                {
+                    updates.Add(update);
+                    outcome.Observe(update);
+                    yield return update;
+                }
+
+                // Keep the whole exchange, tool calls and results included, so the next turn
+                // knows what the model already looked at.
+                _history.AddMessages(updates);
+
+                // Seen live: the model runs a tool, gets the result, then stops (finish: stop) without a word.
+                // Nudge it once to answer, and drop the nudge afterwards so the history reads naturally.
+                var soFar = outcome.Result;
+                if (soFar is { ToolCalls: > 0, EndedWithText: false, Nudges: 0 } && soFar.FinishReason != ChatFinishReason.Length)
+                {
+                    _history.Add(new ChatMessage(ChatRole.User, AnswerNudge));
+                    outcome.Nudged();
+                    continue;
+                }
+                break;
             }
 
-            // Keep the whole exchange, tool calls and results included, so the next turn
-            // knows what the model already looked at.
-            _history.AddMessages(updates);
+            _history.RemoveAll(m => m.Role == ChatRole.User && m.Text == AnswerNudge);
             LastTurn = outcome.Result;
             completed = true;
         }
