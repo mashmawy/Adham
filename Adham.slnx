@@ -1,2 +1,8 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Adham.Common/Adham.Common.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Adham.Common.Tests/Adham.Common.Tests.csproj" />
+  </Folder>
 </Solution>
