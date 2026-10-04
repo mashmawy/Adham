@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Adham.Cli</RootNamespace>
+    <AssemblyName>adham</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Adham.Common\Adham.Common.csproj" />
+    <ProjectReference Include="..\Adham.Core\Adham.Core.csproj" />
+  </ItemGroup>
+</Project>
