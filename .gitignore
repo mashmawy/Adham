@@ -1,0 +1,21 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+TestResults/
+*.log
+*.tmp
+artifacts/
+.DS_Store
+Thumbs.db
+**/coverage/
+**/launchSettings.json
+
+# Secrets: API keys and local settings must never be committed.
+.env
+*.env
+secrets.json
+.claude/settings.local.json
