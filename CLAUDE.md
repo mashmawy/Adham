@@ -17,8 +17,10 @@ Adham is a local-first coding agent for local LLMs. It talks to a local model (U
 
 Projects so far (dependencies point down):
 
-- `Adham.Cli`: console chat loop (`adham` executable), `ServerErrors`.
-- `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client, loaded-model lookup), `AgentSession` (streaming, multi-turn history).
+- `Adham.Cli`: console chat loop (`adham` executable), registers the tools, prints tool calls; `ServerErrors`.
+- `Adham.Tools.Files`: `ReadTool`. `Adham.Tools.Search`: `GlobTool`.
+- `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client with `UseFunctionInvocation()`, loaded-model lookup), `AgentSession` (streaming, history including tool calls and results). Core does not reference the tools.
+- `Adham.Tools.Abstractions`: `ITool`, `ToolRegistry`, `ToolFunction`, `WorkingDirectory`.
 - `Adham.Common`: `AdhamEnvironment` (`ADHAM_API_KEY`, `ADHAM_BASE_URL`, `ADHAM_MODEL`).
 
 Tests use `FakeChatClient` (in `Adham.Core.Tests`) instead of a real model.
@@ -28,6 +30,7 @@ Tests use `FakeChatClient` (in `Adham.Core.Tests`) instead of a real model.
 - Warnings are errors and analyzers are on (`Directory.Build.props`). Fix the code; don't suppress or relax rules.
 - All package versions live in `Directory.Packages.props`. No `Version` attributes in project files.
 - Every behavior has a test.
+- Tools build their `AIFunction` with `ToolFunction.Create` so results reach the model as plain text. Tool parameter names are snake_case (they are the schema the model sees). Tools accept paths relative to the working directory.
 - Add a `docs/decisions.md` entry (date, decision, why, alternatives) for each non-obvious choice.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`).
 - Never commit secrets: API keys go in environment variables or user secrets, never in tracked files.

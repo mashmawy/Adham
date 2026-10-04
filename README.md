@@ -11,6 +11,7 @@ Adham is being rebuilt from an earlier prototype, one layer per episode. Every e
 | # | Episode | What it can do now |
 |---|---------|--------------------|
 | 01 | First chat | Streams a multi-turn conversation with the model loaded in Unsloth Studio |
+| 02 | Reads the code | Decides on its own to search (`Glob`) and open (`Read`) files in the working directory before answering |
 
 ## Requirements
 
@@ -35,6 +36,15 @@ dotnet run --project src/Adham.Cli
 | `ADHAM_MODEL` | the model the server has loaded | Model id from `GET /v1/models` |
 
 Type `/exit` or press Ctrl+C to quit.
+
+Run it from the folder you want to ask about: that's the agent's working directory. Tool calls appear in grey (`⚙ Glob(pattern: **/*.cs)`) as the model makes them.
+
+## Tools
+
+| Tool | What the model can do with it |
+|---|---|
+| `Glob` | Find files by pattern (`**/*.cs`), relative to the working directory; skips `bin`, `obj`, `.git`, `node_modules` |
+| `Read` | Read a text file with line numbers; `offset`/`limit` for large files; binary files are refused |
 
 ## License
 
