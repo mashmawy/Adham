@@ -10,5 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Adham.Common\Adham.Common.csproj" />
     <ProjectReference Include="..\Adham.Core\Adham.Core.csproj" />
+    <ProjectReference Include="..\Adham.Tools.Files\Adham.Tools.Files.csproj" />
+    <ProjectReference Include="..\Adham.Tools.Search\Adham.Tools.Search.csproj" />
   </ItemGroup>
 </Project>

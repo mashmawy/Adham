@@ -1,6 +1,9 @@
 using Adham.Cli;
 using Adham.Common.Env;
 using Adham.Core;
+using Adham.Tools.Abstractions;
+using Adham.Tools.Files;
+using Adham.Tools.Search;
 using Microsoft.Extensions.AI;
 
 var env = new AdhamEnvironment();
@@ -23,16 +26,23 @@ catch (Exception ex) when (ServerErrors.IsServerError(ex) || ex is InvalidOperat
     return 1;
 }
 
+var cwd = new WorkingDirectory(Directory.GetCurrentDirectory());
+var tools = new ToolRegistry([new ReadTool(cwd), new GlobTool(cwd)]);
+
 using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
 var session = new AgentSession(
     client,
-    new ChatOptions { ModelId = model },
-    systemPrompt: "You are Adham, a concise coding assistant running on the user's machine.");
+    new ChatOptions { ModelId = model, Tools = tools.AsAITools() },
+    systemPrompt: $"""
+        You are Adham, a concise coding assistant running on the user's machine.
+        Working directory: {cwd.Path}
+        Use the Glob and Read tools to look at the code before answering questions about it. Don't guess file contents.
+        """);
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-Console.WriteLine($"adham · {model} @ {env.BaseUrl} · /exit to quit");
+Console.WriteLine($"adham · {model} @ {env.BaseUrl} · tools: {string.Join(", ", tools.All.Select(t => t.Name))} · /exit to quit");
 while (!cts.IsCancellationRequested)
 {
     Console.Write("\n> ");
@@ -43,7 +53,11 @@ while (!cts.IsCancellationRequested)
     try
     {
         await foreach (var update in session.SendAsync(input, cts.Token))
+        {
+            foreach (var call in update.Contents.OfType<FunctionCallContent>())
+                WriteDim($"\n  ⚙ {call.Name}({FormatArgs(call.Arguments)})\n");
             Console.Write(update.Text);
+        }
         Console.WriteLine();
     }
     catch (Exception ex) when (ServerErrors.IsServerError(ex))
@@ -56,3 +70,13 @@ while (!cts.IsCancellationRequested)
     }
 }
 return 0;
+
+static string FormatArgs(IDictionary<string, object?>? args) =>
+    args is null ? "" : string.Join(", ", args.Select(a => $"{a.Key}: {a.Value}"));
+
+static void WriteDim(string text)
+{
+    Console.ForegroundColor = ConsoleColor.DarkGray;
+    Console.Write(text);
+    Console.ResetColor();
+}
