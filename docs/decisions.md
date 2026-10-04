@@ -78,3 +78,9 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Decision**: Adham doesn't try to size the context. When the server reports `context_length_exceeded`, the CLI explains it and suggests `/clear` or raising Context Length in Studio. `/clear` keeps the system prompt and drops the conversation.
 - **Why**: Over the OpenAI-compatible API there's no context-size parameter; Studio fixes it at model load. (Atlas sent Ollama `num_ctx=32768` per request, and Ollama silently truncates old tokens when over the limit, which is why v1 never showed this error, and also why v1 sometimes forgot the start of a conversation without saying so.)
 - **Alternatives considered**: Silent truncation like Ollama (hides the problem); automatic compaction or a sliding window over tool results (planned as its own episode, needs a token budget setting).
+
+## 2026-10-04: Diagnose "I had to type continue" before fixing it
+
+- **Decision**: Each turn records how it ended (`TurnOutcome`: finish reason, tool-call count, whether it ended with text after the last tool result). The CLI prints a grey note when a turn ends without an answer: cut off at the length limit, empty response, or silent after a tool call.
+- **Why**: The previous version had to be nudged with "continue" for two different reasons, which needed two different fixes: replies cut off at the output limit (fixed with an automatic continuation nudge) and completely empty responses (fixed with a retry). A third cause, the model announcing an action and stopping without calling the tool, needs yet another fix. Guessing would mean shipping the wrong fix.
+- **Alternatives considered**: Porting both earlier fixes up front (they hide the symptom, and neither handles the third cause); always sending a hidden "continue" (makes the model ramble when it was actually done).
