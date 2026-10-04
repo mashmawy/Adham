@@ -6,6 +6,10 @@ using Adham.Tools.Files;
 using Adham.Tools.Search;
 using Microsoft.Extensions.AI;
 
+// Windows consoles often start in a legacy code page, which turns "⚙", "→" (and non-Latin text) into "?".
+Console.OutputEncoding = System.Text.Encoding.UTF8;
+Console.InputEncoding = System.Text.Encoding.UTF8;
+
 var env = AdhamEnvironment.FromProcessAndDotEnv(Directory.GetCurrentDirectory());
 if (string.IsNullOrWhiteSpace(env.ApiKey))
 {
