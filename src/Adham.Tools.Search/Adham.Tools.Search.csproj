@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Adham.Tools.Search</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Adham.Tools.Search.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" />
+    <ProjectReference Include="..\Adham.Tools.Abstractions\Adham.Tools.Abstractions.csproj" />
+  </ItemGroup>
+</Project>
