@@ -15,6 +15,14 @@ Adham is a local-first coding agent for local LLMs. It talks to a local model (U
 - `Adham.Common` is the leaf (depends on no other Adham project); `Adham.Cli` is the root (nothing depends on it).
 - `docs/decisions.md`: the decision log.
 
+Projects so far (dependencies point down):
+
+- `Adham.Cli`: console chat loop (`adham` executable), `ServerErrors`.
+- `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client, loaded-model lookup), `AgentSession` (streaming, multi-turn history).
+- `Adham.Common`: `AdhamEnvironment` (`ADHAM_API_KEY`, `ADHAM_BASE_URL`, `ADHAM_MODEL`).
+
+Tests use `FakeChatClient` (in `Adham.Core.Tests`) instead of a real model.
+
 ## Rules
 
 - Warnings are errors and analyzers are on (`Directory.Build.props`). Fix the code; don't suppress or relax rules.

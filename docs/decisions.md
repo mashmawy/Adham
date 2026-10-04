@@ -29,3 +29,15 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Decision**: Every package version is pinned in `Directory.Packages.props`, with transitive pinning on. Project files reference packages without versions.
 - **Why**: One place to see and update versions, and no drift between projects.
 - **Alternatives considered**: Per-project `Version` attributes.
+
+## 2026-10-04: Use the model the server has loaded unless one is named
+
+- **Decision**: When `ADHAM_MODEL` is unset, the CLI asks the server (`GET /v1/models`) and uses the first model it reports.
+- **Why**: In Unsloth Studio you pick the model in the UI; making the user copy its id into an environment variable as well is friction with no benefit.
+- **Alternatives considered**: A hard-coded default model id, which breaks as soon as a different model is loaded.
+
+## 2026-10-04: Treat the OpenAI SDK's retry failure as a server error
+
+- **Decision**: `ServerErrors` recognises `HttpRequestException`, `ClientResultException`, and an `AggregateException` made only of those, and reports the first inner message on one line.
+- **Why**: With the server down, the SDK retries 4 times and then throws `AggregateException`, not `HttpRequestException`. Catching only `HttpRequestException` crashed the CLI with a stack trace. An `AggregateException` holding anything else is still allowed to surface, so real bugs aren't hidden.
+- **Alternatives considered**: Catching all exceptions in the chat loop, which would also hide programming errors.
