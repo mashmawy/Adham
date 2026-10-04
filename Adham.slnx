@@ -5,6 +5,7 @@
     <Project Path="src/Adham.Core/Adham.Core.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Adham.Cli.Tests/Adham.Cli.Tests.csproj" />
     <Project Path="tests/Adham.Common.Tests/Adham.Common.Tests.csproj" />
     <Project Path="tests/Adham.Core.Tests/Adham.Core.Tests.csproj" />
   </Folder>

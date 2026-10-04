@@ -1,3 +1,4 @@
+using Adham.Cli;
 using Adham.Common.Env;
 using Adham.Core;
 using Microsoft.Extensions.AI;
@@ -16,9 +17,9 @@ try
         ?? await ChatClientFactory.GetLoadedModelAsync(env.BaseUrl, env.ApiKey, CancellationToken.None)
         ?? throw new InvalidOperationException("no model is loaded; load one in Unsloth Studio first");
 }
-catch (Exception ex) when (ex is HttpRequestException or InvalidOperationException)
+catch (Exception ex) when (ServerErrors.IsServerError(ex) || ex is InvalidOperationException)
 {
-    Console.Error.WriteLine($"Cannot get a model from {env.BaseUrl}: {ex.Message}");
+    Console.Error.WriteLine($"Cannot get a model from {env.BaseUrl}: {ServerErrors.Describe(ex)}");
     return 1;
 }
 
@@ -45,9 +46,9 @@ while (!cts.IsCancellationRequested)
             Console.Write(update.Text);
         Console.WriteLine();
     }
-    catch (HttpRequestException ex)
+    catch (Exception ex) when (ServerErrors.IsServerError(ex))
     {
-        Console.Error.WriteLine($"Model server error at {env.BaseUrl}: {ex.Message}");
+        Console.Error.WriteLine($"Model server error at {env.BaseUrl}: {ServerErrors.Describe(ex)}");
     }
     catch (OperationCanceledException)
     {

@@ -5,6 +5,9 @@
     <AssemblyName>adham</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Adham.Cli.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Adham.Common\Adham.Common.csproj" />
     <ProjectReference Include="..\Adham.Core\Adham.Core.csproj" />
   </ItemGroup>
