@@ -37,7 +37,9 @@ Adham reads the nearest `.env` in the folder it runs from or any parent folder. 
 | `ADHAM_BASE_URL` | `http://localhost:8888/v1` | Any OpenAI-compatible server (Unsloth Studio, llama.cpp, LM Studio, vLLM) |
 | `ADHAM_MODEL` | the model the server has loaded | Model id from `GET /v1/models` |
 
-Type `/exit` or press Ctrl+C to quit.
+Type `/clear` to start a fresh conversation, `/exit` or Ctrl+C to quit.
+
+**Context window.** Unsloth Studio sets the model's context length when it loads the model (Model settings → Context Length); Adham can't change it over the OpenAI-compatible API. Tool results stay in the conversation, so a small window (e.g. 8K) fills up after a few file reads. Raise it in Studio (32K is a good start) or use `/clear`.
 
 Run it from the folder you want to ask about: that's the agent's working directory. Tool calls appear in grey (`⚙ Glob(pattern: **/*.cs)`) as the model makes them.
 

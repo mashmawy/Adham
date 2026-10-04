@@ -66,3 +66,15 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Decision**: The CLI reads `ADHAM_*` settings from the nearest `.env` file (the working directory or any parent), with real environment variables taking precedence. `.env` is git-ignored; `.env.example` is committed.
 - **Why**: Typing the API key into every new terminal is friction, and putting it in a tracked file is a leak waiting to happen. Walking up the parents means `adham` finds the file from any subfolder of the repo.
 - **Alternatives considered**: `dotnet user-secrets` (tied to one project and needs the SDK at run time), or a user-wide `~/.adham` config (the right home once there are more settings than a key).
+
+## 2026-10-04: A failed turn is rolled back
+
+- **Decision**: If a turn fails or is cancelled, `AgentSession` removes everything that turn added (the user message and any partial exchange).
+- **Why**: Found live: Studio rejected a request with `context_length_exceeded` (9,262 tokens vs an 8,192-token window). The rejected message stayed in the history, so every later turn was even longer and failed too. The session was stuck until restart.
+- **Alternatives considered**: Keeping the failed message so the user can "retry" (it can't succeed unchanged); trimming old messages automatically (that's context budgeting, a bigger feature for later).
+
+## 2026-10-04: The context window is the server's setting; Adham explains overflows and offers /clear
+
+- **Decision**: Adham doesn't try to size the context. When the server reports `context_length_exceeded`, the CLI explains it and suggests `/clear` or raising Context Length in Studio. `/clear` keeps the system prompt and drops the conversation.
+- **Why**: Over the OpenAI-compatible API there's no context-size parameter; Studio fixes it at model load. (Atlas sent Ollama `num_ctx=32768` per request, and Ollama silently truncates old tokens when over the limit, which is why v1 never showed this error, and also why v1 sometimes forgot the start of a conversation without saying so.)
+- **Alternatives considered**: Silent truncation like Ollama (hides the problem); automatic compaction or a sliding window over tool results (planned as its own episode, needs a token budget setting).
