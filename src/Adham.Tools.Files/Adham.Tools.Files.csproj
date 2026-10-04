@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Adham.Tools.Files</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Adham.Tools.Files.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Adham.Tools.Abstractions\Adham.Tools.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

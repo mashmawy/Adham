@@ -4,11 +4,13 @@
     <Project Path="src/Adham.Common/Adham.Common.csproj" />
     <Project Path="src/Adham.Core/Adham.Core.csproj" />
     <Project Path="src/Adham.Tools.Abstractions/Adham.Tools.Abstractions.csproj" />
+    <Project Path="src/Adham.Tools.Files/Adham.Tools.Files.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Adham.Cli.Tests/Adham.Cli.Tests.csproj" />
     <Project Path="tests/Adham.Common.Tests/Adham.Common.Tests.csproj" />
     <Project Path="tests/Adham.Core.Tests/Adham.Core.Tests.csproj" />
     <Project Path="tests/Adham.Tools.Abstractions.Tests/Adham.Tools.Abstractions.Tests.csproj" />
+    <Project Path="tests/Adham.Tools.Files.Tests/Adham.Tools.Files.Tests.csproj" />
   </Folder>
 </Solution>
