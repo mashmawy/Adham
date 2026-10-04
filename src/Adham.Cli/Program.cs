@@ -42,13 +42,19 @@ var session = new AgentSession(
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-Console.WriteLine($"adham · {model} @ {env.BaseUrl} · tools: {string.Join(", ", tools.All.Select(t => t.Name))} · /exit to quit");
+Console.WriteLine($"adham · {model} @ {env.BaseUrl} · tools: {string.Join(", ", tools.All.Select(t => t.Name))} · /clear to start over · /exit to quit");
 while (!cts.IsCancellationRequested)
 {
     Console.Write("\n> ");
     var input = Console.ReadLine();
     if (input is null || input.Trim() == "/exit") break;
     if (string.IsNullOrWhiteSpace(input)) continue;
+    if (input.Trim() == "/clear")
+    {
+        session.Clear();
+        WriteDim("(conversation cleared)\n");
+        continue;
+    }
 
     try
     {
@@ -63,6 +69,8 @@ while (!cts.IsCancellationRequested)
     catch (Exception ex) when (ServerErrors.IsServerError(ex))
     {
         Console.Error.WriteLine($"Model server error at {env.BaseUrl}: {ServerErrors.Describe(ex)}");
+        if (ServerErrors.IsContextOverflow(ex))
+            Console.Error.WriteLine("The conversation no longer fits the model's context window. Type /clear to start over, or raise Context Length in Unsloth Studio.");
     }
     catch (OperationCanceledException)
     {

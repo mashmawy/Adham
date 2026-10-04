@@ -20,6 +20,13 @@ public sealed class AgentSession
 
     public IReadOnlyList<ChatMessage> History => _history;
 
+    // Start over: keep the system prompt, forget the conversation (and everything the tools returned).
+    public void Clear()
+    {
+        var keep = _history.Count > 0 && _history[0].Role == ChatRole.System ? 1 : 0;
+        _history.RemoveRange(keep, _history.Count - keep);
+    }
+
     public async IAsyncEnumerable<ChatResponseUpdate> SendAsync(
         string text,
         [EnumeratorCancellation] CancellationToken ct)

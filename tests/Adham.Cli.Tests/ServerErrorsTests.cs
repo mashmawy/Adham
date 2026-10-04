@@ -35,4 +35,16 @@ public class ServerErrorsTests
 
         ServerErrors.IsServerError(ex).Should().BeFalse();
     }
+
+    [Fact]
+    public void ContextLengthExceeded_IsRecognizedAsContextOverflow()
+    {
+        // The shape Unsloth Studio returned when the history outgrew an 8K window.
+        var ex = new ClientResultException(
+            "HTTP 400 (invalid_request_error: context_length_exceeded)\nParameter: messages\n\n" +
+            "Message too long: 9262 tokens exceeds the 8192-token context window.");
+
+        ServerErrors.IsContextOverflow(ex).Should().BeTrue();
+        ServerErrors.IsContextOverflow(new HttpRequestException(Refused)).Should().BeFalse();
+    }
 }

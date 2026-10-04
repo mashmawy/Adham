@@ -74,6 +74,18 @@ public class AgentSessionTests
         session.History.Select(m => m.Role).Should().Equal(ChatRole.System);
     }
 
+    [Fact]
+    public async Task Clear_KeepsTheSystemPrompt_AndForgetsTheConversation()
+    {
+        var client = new FakeChatClient(_ => FakeChatClient.StreamText("ok"));
+        var session = new AgentSession(client, new ChatOptions(), systemPrompt: "you are adham");
+        await foreach (var _ in session.SendAsync("hi", default)) { }
+
+        session.Clear();
+
+        session.History.Select(m => m.Text).Should().Equal("you are adham");
+    }
+
     private static IAsyncEnumerable<ChatResponseUpdate> Fail() =>
         throw new InvalidOperationException("context_length_exceeded");
 
