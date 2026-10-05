@@ -34,7 +34,3 @@ Tests use `FakeChatClient` (in `Adham.Core.Tests`) instead of a real model.
 - Add a `docs/decisions.md` entry (date, decision, why, alternatives) for each non-obvious choice.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`).
 - Never commit secrets: API keys go in environment variables or user secrets, never in tracked files.
-
-## Reference material
-
-Atlas, the earlier prototype, is at `C:\Users\speed\source\repos\Atlas`. It is read-only reference: read it and use `git -C <atlas> show <sha>:<path>`, but never modify it.

@@ -4,15 +4,6 @@
 
 A local-first coding agent for local LLMs. .NET 10, OpenAI-compatible backend (Unsloth Studio, llama.cpp, LM Studio, vLLM).
 
-## Built in public
-
-Adham is being rebuilt from an earlier prototype, one layer per episode. Every episode ends with something the agent can do.
-
-| # | Episode | What it can do now |
-|---|---------|--------------------|
-| 01 | First chat | Streams a multi-turn conversation with the model loaded in Unsloth Studio |
-| 02 | Reads the code | Decides on its own to search (`Glob`) and open (`Read`) files in the working directory before answering |
-
 ## Requirements
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)

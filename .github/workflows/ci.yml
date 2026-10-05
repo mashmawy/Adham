@@ -21,7 +21,7 @@ jobs:
         run: dotnet restore
       - name: Build
         run: dotnet build --configuration Release --no-restore
-      # Skip tests until the first test project exists (Episode 01).
+      # Skip the test step when the solution has no test projects.
       - name: Test
         shell: bash
         run: |
