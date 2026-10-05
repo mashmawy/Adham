@@ -1,6 +1,6 @@
 # Adham
 
-[![ci](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
+[![ci](https://github.com/mashmawy/Adham/actions/workflows/ci.yml/badge.svg)](https://github.com/mashmawy/Adham/actions/workflows/ci.yml)
 
 A local-first coding agent for local LLMs. .NET 10, OpenAI-compatible backend (Unsloth Studio, llama.cpp, LM Studio, vLLM).
 
