@@ -17,10 +17,10 @@ Adham is a local-first coding agent for local LLMs. It talks to a local model (U
 
 Projects so far (dependencies point down):
 
-- `Adham.Cli`: console chat loop (`adham` executable), registers the tools, prints tool calls; `ServerErrors`.
-- `Adham.Tools.Files`: `ReadTool`. `Adham.Tools.Search`: `GlobTool`.
+- `Adham.Cli`: console chat loop (`adham` executable), registers the tools, prints tool calls; `ServerErrors`; `ConsoleChangeApprover` + `DiffText` (diff and y/N before every file change).
+- `Adham.Tools.Files`: `ReadTool`, `EditTool`, `WriteTool`, `FileReadTracker` (read-before-write rules). `Adham.Tools.Search`: `GlobTool`.
 - `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client with `UseFunctionInvocation()`, loaded-model lookup), `AgentSession` (streaming, history including tool calls and results). Core does not reference the tools.
-- `Adham.Tools.Abstractions`: `ITool`, `ToolRegistry`, `ToolFunction`, `WorkingDirectory`.
+- `Adham.Tools.Abstractions`: `ITool`, `ToolRegistry`, `ToolFunction`, `WorkingDirectory`, `IChangeApprover`/`FileChange`.
 - `Adham.Common`: `AdhamEnvironment` (`ADHAM_API_KEY`, `ADHAM_BASE_URL`, `ADHAM_MODEL`).
 
 Tests use `FakeChatClient` (in `Adham.Core.Tests`) instead of a real model.

@@ -40,6 +40,15 @@ Run it from the folder you want to ask about: that's the agent's working directo
 |---|---|
 | `Glob` | Find files by pattern (`**/*.cs`), relative to the working directory; skips `bin`, `obj`, `.git`, `node_modules` |
 | `Read` | Read a text file with line numbers; `offset`/`limit` for large files; binary files are refused |
+| `Edit` | Replace exact text in a file (unique match, or `replace_all`) |
+| `Write` | Create a file, or replace a whole file |
+
+### Changing files safely
+
+- **You approve every change.** Before `Edit` or `Write` touches a file, Adham shows a diff and asks `Allow this change? [y/N]`. Anything but `y` is a no, and nothing is written.
+- **Read before write.** The model can only edit a file it has read this session, and can only replace a whole file it has read in full. If the file changed on disk since it was read, the change is refused until it's read again.
+- **Line endings are kept.** An edit to a CRLF file stays CRLF.
+- Writes are atomic (temp file, then swap), so a crash never leaves a half-written file.
 
 ## License
 
