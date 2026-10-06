@@ -3,6 +3,14 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Adham.Cli</RootNamespace>
     <AssemblyName>adham</AssemblyName>
+    <!-- Installed as a global tool: `adham` from any folder, which becomes the working directory. -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>adham</ToolCommandName>
+    <PackageId>Adham</PackageId>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\..\nupkgs</PackageOutputPath>
+    <Description>Adham: a local-first coding agent for local LLMs (OpenAI-compatible backends such as Unsloth Studio).</Description>
+    <PackageTags>ai;agent;llm;local;cli</PackageTags>
+    <Version>0.1.0-alpha.1</Version>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Adham.Cli.Tests" />

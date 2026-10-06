@@ -9,6 +9,7 @@ TestResults/
 *.log
 *.tmp
 artifacts/
+nupkgs/
 .DS_Store
 Thumbs.db
 **/coverage/

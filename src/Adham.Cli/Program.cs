@@ -13,7 +13,7 @@ Console.InputEncoding = System.Text.Encoding.UTF8;
 var env = AdhamEnvironment.FromProcessAndDotEnv(Directory.GetCurrentDirectory());
 if (string.IsNullOrWhiteSpace(env.ApiKey))
 {
-    Console.Error.WriteLine("Set ADHAM_API_KEY (environment variable or a git-ignored .env file) to your Unsloth Studio key (Settings → API, starts with sk-unsloth-).");
+    Console.Error.WriteLine($"Set ADHAM_API_KEY to your Unsloth Studio key (Settings → API, starts with sk-unsloth-): in {Adham.Common.Paths.AdhamPaths.UserDotEnv()} for every folder, in a project .env, or as an environment variable.");
     return 1;
 }
 
@@ -55,7 +55,8 @@ var session = new AgentSession(
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-Console.WriteLine($"adham · {model} @ {env.BaseUrl} · tools: {string.Join(", ", tools.All.Select(t => t.Name))} · /clear to start over · /exit to quit");
+Console.WriteLine($"adham · {model} @ {env.BaseUrl}");
+WriteDim($"working in {cwd.Path} · tools: {string.Join(", ", tools.All.Select(t => t.Name))} · /clear to start over · /exit to quit\n");
 while (!cts.IsCancellationRequested)
 {
     Console.Write("\n> ");
