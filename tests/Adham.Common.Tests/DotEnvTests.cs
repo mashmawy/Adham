@@ -66,4 +66,35 @@ public sealed class DotEnvTests : IDisposable
 
         env.ApiKey.Should().Be("from-file");
     }
+
+    [Fact]
+    public void Layered_ProjectFileWins_OverTheUserFile()
+    {
+        var project = DotEnv.Parse(["ADHAM_MODEL=project-model"]);
+        var user = DotEnv.Parse(["ADHAM_MODEL=user-model", "ADHAM_API_KEY=user-key"]);
+
+        var env = AdhamEnvironment.Layered(_ => null, project, user);
+
+        env.Model.Should().Be("project-model");
+        env.ApiKey.Should().Be("user-key"); // the user file still fills in what the project doesn't set
+    }
+}
+
+public class AdhamPathsTests
+{
+    [Fact]
+    public void UserConfigDir_DefaultsToDotAdhamInTheHomeFolder()
+    {
+        var dir = Adham.Common.Paths.AdhamPaths.UserConfigDir(_ => null, Path.Combine("home", "u"));
+
+        dir.Should().Be(Path.Combine("home", "u", ".adham"));
+    }
+
+    [Fact]
+    public void UserConfigDir_HonorsAdhamHome()
+    {
+        var dir = Adham.Common.Paths.AdhamPaths.UserConfigDir(n => n == "ADHAM_HOME" ? "/custom" : null, "home");
+
+        dir.Should().Be("/custom");
+    }
 }

@@ -1,3 +1,5 @@
+using Adham.Common.Paths;
+
 namespace Adham.Common.Env;
 
 // Reads ADHAM_* settings. The reader is injectable so tests never touch the real environment.
@@ -9,12 +11,24 @@ public sealed class AdhamEnvironment
 
     public AdhamEnvironment(Func<string, string?> read) => _read = read;
 
-    // Real environment variables win; the nearest .env file fills in the rest.
+    // First match wins: real environment variables, then the nearest .env above the working
+    // directory (per-project settings), then ~/.adham/.env (user-wide, so `adham` works in any folder).
     public static AdhamEnvironment FromProcessAndDotEnv(string startDir) =>
-        Layered(Environment.GetEnvironmentVariable, DotEnv.Load(DotEnv.Find(startDir)));
+        Layered(
+            Environment.GetEnvironmentVariable,
+            DotEnv.Load(DotEnv.Find(startDir)),
+            DotEnv.Load(File.Exists(AdhamPaths.UserDotEnv()) ? AdhamPaths.UserDotEnv() : null));
 
-    internal static AdhamEnvironment Layered(Func<string, string?> process, IReadOnlyDictionary<string, string> file) =>
-        new(name => process(name) is { Length: > 0 } fromProcess ? fromProcess : file.GetValueOrDefault(name));
+    internal static AdhamEnvironment Layered(Func<string, string?> process, params IReadOnlyDictionary<string, string>[] files) =>
+        new(name =>
+        {
+            if (process(name) is { Length: > 0 } fromProcess)
+                return fromProcess;
+            foreach (var file in files)
+                if (file.TryGetValue(name, out var value) && value.Length > 0)
+                    return value;
+            return null;
+        });
 
     // OpenAI-compatible base URL, including /v1. Default: Unsloth Studio on its default port.
     public Uri BaseUrl
