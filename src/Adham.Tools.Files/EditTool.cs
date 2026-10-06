@@ -6,7 +6,7 @@ using Microsoft.Extensions.AI;
 
 namespace Adham.Tools.Files;
 
-public sealed class EditTool(WorkingDirectory cwd, FileReadTracker reads) : ITool
+public sealed class EditTool(WorkingDirectory cwd, FileReadTracker reads, IChangeApprover approver) : ITool
 {
     public string Name => "Edit";
 
@@ -78,6 +78,9 @@ public sealed class EditTool(WorkingDirectory cwd, FileReadTracker reads) : IToo
                 ? content.Replace(oldText, newText, StringComparison.Ordinal)
                 : ReplaceFirst(content, oldText, newText);
         }
+
+        if (!await approver.ApproveAsync(new FileChange(file_path, content, updated), cancellationToken).ConfigureAwait(false))
+            return WriteTool.Declined(file_path);
 
         await AtomicFile.WriteAllTextAsync(fullPath, usesCrlf ? updated.Replace("\n", "\r\n", StringComparison.Ordinal) : updated, cancellationToken)
             .ConfigureAwait(false);

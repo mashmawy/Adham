@@ -12,13 +12,14 @@ public sealed class EditToolTests : IDisposable
     private readonly ReadTool _read;
     private readonly EditTool _edit;
     private readonly WriteTool _write;
+    private readonly ScriptedApprover _approver = new();
 
     public EditToolTests()
     {
         var cwd = new WorkingDirectory(_dir);
         _read = new ReadTool(cwd, _reads);
-        _edit = new EditTool(cwd, _reads);
-        _write = new WriteTool(cwd, _reads);
+        _edit = new EditTool(cwd, _reads, _approver);
+        _write = new WriteTool(cwd, _reads, _approver);
     }
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
@@ -173,5 +174,38 @@ public sealed class EditToolTests : IDisposable
 
         schema.Should().Contain("old_string").And.Contain("new_string").And.Contain("replace_all");
         schema.Should().NotContain("\"replace_all\"]").And.Contain("\"required\":[\"file_path\",\"old_string\",\"new_string\"]");
+    }
+
+    [Fact]
+    public async Task UserIsAsked_WithTheWholeFileBeforeAndAfter()
+    {
+        await Given("Calc.cs", "int Add(int a, int b) => a - b;\n");
+
+        await _edit.ExecuteAsync("Calc.cs", "a - b", "a + b");
+
+        _approver.Asked.Should().ContainSingle().Which.Should().Be(new FileChange(
+            "Calc.cs", "int Add(int a, int b) => a - b;\n", "int Add(int a, int b) => a + b;\n"));
+    }
+
+    [Fact]
+    public async Task Declined_LeavesTheFileUntouched()
+    {
+        await Given("a.txt", "hello");
+        _approver.Answer = false;
+
+        var result = await _edit.ExecuteAsync("a.txt", "hello", "bye");
+
+        result.Should().Contain("declined");
+        File.ReadAllText(PathOf("a.txt")).Should().Be("hello");
+    }
+
+    [Fact]
+    public async Task RefusedEdits_NeverReachTheUser()
+    {
+        File.WriteAllText(PathOf("a.txt"), "hello");
+
+        await _edit.ExecuteAsync("a.txt", "hello", "bye");
+
+        _approver.Asked.Should().BeEmpty();
     }
 }

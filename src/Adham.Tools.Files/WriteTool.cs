@@ -5,7 +5,7 @@ using Microsoft.Extensions.AI;
 
 namespace Adham.Tools.Files;
 
-public sealed class WriteTool(WorkingDirectory cwd, FileReadTracker reads) : ITool
+public sealed class WriteTool(WorkingDirectory cwd, FileReadTracker reads, IChangeApprover approver) : ITool
 {
     public string Name => "Write";
 
@@ -39,6 +39,10 @@ public sealed class WriteTool(WorkingDirectory cwd, FileReadTracker reads) : ITo
         if (exists && CheckOverwriteAllowed(fullPath) is { } refusal)
             return refusal;
 
+        var before = exists ? await File.ReadAllTextAsync(fullPath, Encoding.UTF8, cancellationToken).ConfigureAwait(false) : null;
+        if (!await approver.ApproveAsync(new FileChange(file_path, before, content ?? ""), cancellationToken).ConfigureAwait(false))
+            return Declined(file_path);
+
         await AtomicFile.WriteAllTextAsync(fullPath, content ?? "", cancellationToken).ConfigureAwait(false);
 
         // Our own write counts as a full read, so writing the same file again isn't blocked.
@@ -48,6 +52,10 @@ public sealed class WriteTool(WorkingDirectory cwd, FileReadTracker reads) : ITo
             ? $"The file {file_path} has been updated successfully."
             : $"File created successfully at: {file_path}";
     }
+
+    internal static string Declined(string path) =>
+        $"The user declined this change to {path}. Nothing was written. " +
+        "Don't retry the same change; ask the user what they want instead.";
 
     // Write replaces the whole file, so it needs whole-file consent: a full read, and no change since.
     private string? CheckOverwriteAllowed(string fullPath)

@@ -11,12 +11,13 @@ public sealed class WriteToolTests : IDisposable
     private readonly FileReadTracker _reads = new();
     private readonly ReadTool _read;
     private readonly WriteTool _write;
+    private readonly ScriptedApprover _approver = new();
 
     public WriteToolTests()
     {
         var cwd = new WorkingDirectory(_dir);
         _read = new ReadTool(cwd, _reads);
-        _write = new WriteTool(cwd, _reads);
+        _write = new WriteTool(cwd, _reads, _approver);
     }
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
@@ -94,5 +95,36 @@ public sealed class WriteToolTests : IDisposable
     public void IsNotReadOnly()
     {
         _write.IsReadOnly.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UserIsAsked_WithTheBeforeAndAfter()
+    {
+        File.WriteAllText(PathOf("a.txt"), "old");
+        await _read.ExecuteAsync("a.txt");
+
+        await _write.ExecuteAsync("a.txt", "new");
+
+        _approver.Asked.Should().ContainSingle()
+            .Which.Should().Be(new FileChange("a.txt", "old", "new"));
+    }
+
+    [Fact]
+    public async Task NewFile_IsAskedWithNoBefore()
+    {
+        await _write.ExecuteAsync("b.txt", "hello");
+
+        _approver.Asked.Single().Before.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Declined_WritesNothing_AndTellsTheModelToAsk()
+    {
+        _approver.Answer = false;
+
+        var result = await _write.ExecuteAsync("b.txt", "hello");
+
+        result.Should().Contain("declined").And.Contain("ask the user");
+        File.Exists(PathOf("b.txt")).Should().BeFalse();
     }
 }
