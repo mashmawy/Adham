@@ -79,7 +79,7 @@ public sealed class EditTool(WorkingDirectory cwd, FileReadTracker reads, IChang
                 : ReplaceFirst(content, oldText, newText);
         }
 
-        if (!await approver.ApproveAsync(new FileChange(file_path, content, updated), cancellationToken).ConfigureAwait(false))
+        if (!await approver.ApproveAsync(new FileChange(cwd.Relative(fullPath), content, updated), cancellationToken).ConfigureAwait(false))
             return WriteTool.Declined(file_path);
 
         await AtomicFile.WriteAllTextAsync(fullPath, usesCrlf ? updated.Replace("\n", "\r\n", StringComparison.Ordinal) : updated, cancellationToken)

@@ -127,4 +127,12 @@ public sealed class WriteToolTests : IDisposable
         result.Should().Contain("declined").And.Contain("ask the user");
         File.Exists(PathOf("b.txt")).Should().BeFalse();
     }
+
+    [Fact]
+    public async Task ApprovalPrompt_ShowsThePathRelativeToTheWorkingDirectory()
+    {
+        await _write.ExecuteAsync(PathOf("docs/notes.md"), "# Notes");
+
+        _approver.Asked.Single().Path.Should().Be("docs/notes.md");
+    }
 }

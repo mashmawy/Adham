@@ -177,6 +177,19 @@ public sealed class EditToolTests : IDisposable
     }
 
     [Fact]
+    public async Task ApprovalPrompt_ShowsThePathRelativeToTheWorkingDirectory()
+    {
+        // Seen live: the model sent an absolute path, and the prompt repeated a 140-character path twice.
+        Directory.CreateDirectory(PathOf("src"));
+        File.WriteAllText(PathOf("src/Calc.cs"), "a - b");
+        await _read.ExecuteAsync(PathOf("src/Calc.cs"));
+
+        await _edit.ExecuteAsync(PathOf("src/Calc.cs"), "a - b", "a + b");
+
+        _approver.Asked.Single().Path.Should().Be("src/Calc.cs");
+    }
+
+    [Fact]
     public async Task UserIsAsked_WithTheWholeFileBeforeAndAfter()
     {
         await Given("Calc.cs", "int Add(int a, int b) => a - b;\n");

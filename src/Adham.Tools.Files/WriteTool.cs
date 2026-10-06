@@ -40,7 +40,7 @@ public sealed class WriteTool(WorkingDirectory cwd, FileReadTracker reads, IChan
             return refusal;
 
         var before = exists ? await File.ReadAllTextAsync(fullPath, Encoding.UTF8, cancellationToken).ConfigureAwait(false) : null;
-        if (!await approver.ApproveAsync(new FileChange(file_path, before, content ?? ""), cancellationToken).ConfigureAwait(false))
+        if (!await approver.ApproveAsync(new FileChange(cwd.Relative(fullPath), before, content ?? ""), cancellationToken).ConfigureAwait(false))
             return Declined(file_path);
 
         await AtomicFile.WriteAllTextAsync(fullPath, content ?? "", cancellationToken).ConfigureAwait(false);
