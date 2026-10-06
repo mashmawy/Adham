@@ -31,7 +31,14 @@ catch (Exception ex) when (ServerErrors.IsServerError(ex) || ex is InvalidOperat
 }
 
 var cwd = new WorkingDirectory(Directory.GetCurrentDirectory());
-var tools = new ToolRegistry([new ReadTool(cwd), new GlobTool(cwd)]);
+var reads = new FileReadTracker();
+var approver = ConsoleChangeApprover.ForConsole();
+var tools = new ToolRegistry([
+    new ReadTool(cwd, reads),
+    new GlobTool(cwd),
+    new EditTool(cwd, reads, approver),
+    new WriteTool(cwd, reads, approver),
+]);
 
 using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
 var session = new AgentSession(
@@ -41,6 +48,8 @@ var session = new AgentSession(
         You are Adham, a concise coding assistant running on the user's machine.
         Working directory: {cwd.Path}
         Use the Glob and Read tools to look at the code before answering questions about it. Don't guess file contents.
+        To change a file, Read it first, then prefer Edit for targeted changes and Write for new files.
+        The user approves every change; if they decline, ask what they want instead.
         """);
 
 using var cts = new CancellationTokenSource();
@@ -56,6 +65,7 @@ while (!cts.IsCancellationRequested)
     if (input.Trim() == "/clear")
     {
         session.Clear();
+        reads.Clear(); // a fresh conversation has read nothing, so edits need fresh reads
         WriteDim("(conversation cleared)\n");
         continue;
     }

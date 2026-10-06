@@ -8,6 +8,7 @@
     <InternalsVisibleTo Include="Adham.Cli.Tests" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="DiffPlex" />
     <ProjectReference Include="..\Adham.Common\Adham.Common.csproj" />
     <ProjectReference Include="..\Adham.Core\Adham.Core.csproj" />
     <ProjectReference Include="..\Adham.Tools.Files\Adham.Tools.Files.csproj" />
