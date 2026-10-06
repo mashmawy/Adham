@@ -6,7 +6,7 @@ using Microsoft.Extensions.AI;
 
 namespace Adham.Tools.Files;
 
-public sealed class ReadTool(WorkingDirectory cwd) : ITool
+public sealed class ReadTool(WorkingDirectory cwd, FileReadTracker? reads = null) : ITool
 {
     internal const int MaxLines = 2000;
     internal const int MaxLineLength = 2000;
@@ -47,6 +47,12 @@ public sealed class ReadTool(WorkingDirectory cwd) : ITool
             return "<binary file: not shown>";
 
         var lines = await File.ReadAllLinesAsync(fullPath, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
+        // Remember the read so Edit/Write can check the model has seen the file.
+        if (offset is null && limit is null)
+            reads?.RecordFull(fullPath);
+        else
+            reads?.RecordPartial(fullPath);
+
         if (lines.Length == 0)
             return "<file is empty>";
 
