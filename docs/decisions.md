@@ -121,3 +121,9 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Seen live: in a folder that only contains subfolders, `Glob *` returns "No files found." and the model called the folder empty. Teaching `Glob` about folders would mix two jobs in one tool; a read-only shell listing is the natural place, and the model already knows those commands.
 - **Alternatives considered**: `Glob` listing folders with a trailing `/` (works, but blurs the tool's contract); a separate `List` tool (one more tool to describe in a small context window).
 
+## 2026-10-06: Adham is a global tool; the working directory is where you start it
+
+- **Decision**: Adham is packaged as a .NET global tool (`dotnet tool install -g Adham`, command `adham`). The folder you run it in is its working directory. User-wide settings, such as the API key, live in `~/.adham/.env` (or `$ADHAM_HOME/.env`), after environment variables and any project `.env`. The banner shows the working directory, and approval prompts show paths relative to it.
+- **Why**: Testing Adham on another project meant typing `dotnet run --project <path>` and copying the key into every project. A coding agent should work like `git`: `cd` to the project and run it.
+- **Alternatives considered**: A `--cwd` flag (another way to say the same thing, and easy to get out of sync with relative paths in the conversation); keeping the key only in a project `.env` (has to be copied into every project).
+

@@ -13,14 +13,26 @@ A local-first coding agent for local LLMs. .NET 10, OpenAI-compatible backend (U
 
 1. Start Unsloth Studio and load a model.
 2. Create an API key in Studio (**Settings → API**); it starts with `sk-unsloth-`.
-3. Put the key in a local `.env` file (git-ignored) at the repo root:
+3. Install Adham as a global tool and save your key once:
 
 ```powershell
-Copy-Item .env.example .env   # then edit ADHAM_API_KEY in .env
-dotnet run --project src/Adham.Cli
+dotnet pack src/Adham.Cli -c Release
+dotnet tool install -g Adham --add-source ./nupkgs --prerelease
+
+New-Item -ItemType Directory -Force ~/.adham | Out-Null
+Set-Content ~/.adham/.env "ADHAM_API_KEY=sk-unsloth-..."
 ```
 
-Adham reads the nearest `.env` in the folder it runs from or any parent folder. Environment variables override it (`$env:ADHAM_API_KEY = "..."`).
+4. Run it in the folder you want to work on. That folder is Adham's working directory:
+
+```powershell
+cd C:\code\my-project
+adham
+```
+
+To pick up code changes, pack again and reinstall: `dotnet tool uninstall -g Adham`, then the install line above. Without installing, `dotnet run --project src/Adham.Cli` runs it with the current folder as the working directory.
+
+**Where settings come from** (first match wins): environment variables, then the nearest `.env` in the working directory or a parent folder (per-project settings, git-ignored), then `~/.adham/.env` (user-wide; `ADHAM_HOME` moves this folder).
 
 | Variable | Default | Meaning |
 |---|---|---|
