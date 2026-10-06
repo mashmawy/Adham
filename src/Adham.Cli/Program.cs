@@ -76,7 +76,7 @@ while (!cts.IsCancellationRequested)
         await foreach (var update in session.SendAsync(input, cts.Token))
         {
             foreach (var call in update.Contents.OfType<FunctionCallContent>())
-                WriteDim($"\n  ⚙ {call.Name}({FormatArgs(call.Arguments)})\n");
+                WriteDim($"\n  ⚙ {ToolCallText.Format(call.Name, call.Arguments, cwd)}\n");
             Console.Write(update.Text);
         }
         Console.WriteLine();
@@ -95,9 +95,6 @@ while (!cts.IsCancellationRequested)
     }
 }
 return 0;
-
-static string FormatArgs(IDictionary<string, object?>? args) =>
-    args is null ? "" : string.Join(", ", args.Select(a => $"{a.Key}: {a.Value}"));
 
 static void WriteDim(string text)
 {
