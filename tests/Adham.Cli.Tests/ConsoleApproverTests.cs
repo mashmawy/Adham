@@ -5,17 +5,26 @@ using Xunit;
 
 namespace Adham.Cli.Tests;
 
-public class ConsoleChangeApproverTests
+public class ConsoleApproverTests
 {
     private static async Task<(bool Approved, string Shown)> Ask(string typed, FileChange change)
     {
         using var output = new StringWriter();
-        var approver = new ConsoleChangeApprover(new StringReader(typed), output, color: false);
+        var approver = new ConsoleApprover(new StringReader(typed), output, color: false);
         var approved = await approver.ApproveAsync(change, default);
         return (approved, output.ToString());
     }
 
+    private static async Task<(bool Approved, string Shown)> Ask(string typed, CommandRequest request)
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader(typed), output, color: false);
+        var approved = await approver.ApproveAsync(request, default);
+        return (approved, output.ToString());
+    }
+
     private static readonly FileChange Fix = new("src/Calc.cs", "return a - b;\n", "return a + b;\n");
+    private static readonly CommandRequest Tests = new("PowerShell", "python -m unittest");
 
     [Theory]
     [InlineData("y\n")]
@@ -24,6 +33,7 @@ public class ConsoleChangeApproverTests
     public async Task Yes_Approves(string typed)
     {
         (await Ask(typed, Fix)).Approved.Should().BeTrue();
+        (await Ask(typed, Tests)).Approved.Should().BeTrue();
     }
 
     [Theory]
@@ -34,6 +44,7 @@ public class ConsoleChangeApproverTests
     public async Task AnythingElse_Declines(string typed)
     {
         (await Ask(typed, Fix)).Approved.Should().BeFalse();
+        (await Ask(typed, Tests)).Approved.Should().BeFalse();
     }
 
     [Fact]
@@ -54,5 +65,16 @@ public class ConsoleChangeApproverTests
         var (_, shown) = await Ask("y\n", new FileChange("notes.md", null, "# Notes\n"));
 
         shown.Should().Contain("New file: notes.md").And.Contain("+ # Notes");
+    }
+
+    [Fact]
+    public async Task Command_ShowsTheShellAndTheExactCommand()
+    {
+        var (_, shown) = await Ask("y\n", Tests);
+
+        shown.Should().Contain("Run in PowerShell:")
+            .And.Contain("    python -m unittest")
+            .And.Contain("Run this command? [y/N]")
+            .And.Contain("(approved)");
     }
 }

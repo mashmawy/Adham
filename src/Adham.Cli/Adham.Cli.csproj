@@ -21,5 +21,6 @@
     <ProjectReference Include="..\Adham.Core\Adham.Core.csproj" />
     <ProjectReference Include="..\Adham.Tools.Files\Adham.Tools.Files.csproj" />
     <ProjectReference Include="..\Adham.Tools.Search\Adham.Tools.Search.csproj" />
+    <ProjectReference Include="..\Adham.Tools.Shell\Adham.Tools.Shell.csproj" />
   </ItemGroup>
 </Project>

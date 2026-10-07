@@ -4,6 +4,7 @@ using Adham.Core;
 using Adham.Tools.Abstractions;
 using Adham.Tools.Files;
 using Adham.Tools.Search;
+using Adham.Tools.Shell;
 using Microsoft.Extensions.AI;
 
 // Windows consoles often start in a legacy code page, which turns "⚙", "→" (and non-Latin text) into "?".
@@ -32,12 +33,14 @@ catch (Exception ex) when (ServerErrors.IsServerError(ex) || ex is InvalidOperat
 
 var cwd = new WorkingDirectory(Directory.GetCurrentDirectory());
 var reads = new FileReadTracker();
-var approver = ConsoleChangeApprover.ForConsole();
+var approver = ConsoleApprover.ForConsole();
+var shell = new ShellTool(Shell.ForThisMachine(), cwd, approver);
 var tools = new ToolRegistry([
     new ReadTool(cwd, reads),
     new GlobTool(cwd),
     new EditTool(cwd, reads, approver),
     new WriteTool(cwd, reads, approver),
+    shell,
 ]);
 
 using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
@@ -49,7 +52,8 @@ var session = new AgentSession(
         Working directory: {cwd.Path}
         Use the Glob and Read tools to look at the code before answering questions about it. Don't guess file contents.
         To change a file, Read it first, then prefer Edit for targeted changes and Write for new files.
-        The user approves every change; if they decline, ask what they want instead.
+        Run builds, tests and git with the {shell.Name} tool; after changing code, run the tests to check your fix.
+        The user approves every change and every command that isn't read-only; if they decline, ask what they want instead.
         """);
 
 using var cts = new CancellationTokenSource();
