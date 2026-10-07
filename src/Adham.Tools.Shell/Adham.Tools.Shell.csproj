@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Adham.Tools.Shell</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Adham.Tools.Shell.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CliWrap" />
+    <ProjectReference Include="..\Adham.Tools.Abstractions\Adham.Tools.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

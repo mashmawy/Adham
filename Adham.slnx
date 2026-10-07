@@ -6,6 +6,7 @@
     <Project Path="src/Adham.Tools.Abstractions/Adham.Tools.Abstractions.csproj" />
     <Project Path="src/Adham.Tools.Files/Adham.Tools.Files.csproj" />
     <Project Path="src/Adham.Tools.Search/Adham.Tools.Search.csproj" />
+    <Project Path="src/Adham.Tools.Shell/Adham.Tools.Shell.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Adham.Cli.Tests/Adham.Cli.Tests.csproj" />
@@ -14,5 +15,6 @@
     <Project Path="tests/Adham.Tools.Abstractions.Tests/Adham.Tools.Abstractions.Tests.csproj" />
     <Project Path="tests/Adham.Tools.Files.Tests/Adham.Tools.Files.Tests.csproj" />
     <Project Path="tests/Adham.Tools.Search.Tests/Adham.Tools.Search.Tests.csproj" />
+    <Project Path="tests/Adham.Tools.Shell.Tests/Adham.Tools.Shell.Tests.csproj" />
   </Folder>
 </Solution>
