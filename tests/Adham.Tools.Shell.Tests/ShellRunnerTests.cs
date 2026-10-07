@@ -74,6 +74,18 @@ public sealed class ShellRunnerTests : IDisposable
         result.Stdout.Should().Be("مرحبا ⚙\n");
     }
 
+    [Fact]
+    public async Task AnsiColorCodes_AreStripped()
+    {
+        // Seen live: PowerShell 7 colors error output ("\e[31;1m...\e[0m"), and the codes reached
+        // both the model and the screen as noise.
+        var result = await Run(IsPs
+            ? "Write-Output \"$([char]27)[31;1mred$([char]27)[0m plain\""
+            : "printf '\\033[31;1mred\\033[0m plain\\n'");
+
+        result.Stdout.Should().Be("red plain\n");
+    }
+
     [Theory]
     [InlineData(null, ShellRunner.DefaultTimeoutMs)]
     [InlineData(0, ShellRunner.DefaultTimeoutMs)]

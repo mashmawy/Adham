@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using CliWrap;
 
 namespace Adham.Tools.Shell;
@@ -8,7 +9,7 @@ public sealed record ShellResult(int ExitCode, string Stdout, string Stderr, boo
 // Runs one command in a fresh shell process in the working directory. Nothing carries over
 // between calls (no cd, no variables). On timeout the process is killed and whatever it
 // printed so far is returned.
-public static class ShellRunner
+public static partial class ShellRunner
 {
     public const int DefaultTimeoutMs = 120_000;
     public const int MaxTimeoutMs = 600_000;
@@ -58,6 +59,8 @@ public static class ShellRunner
         {
             if (Truncated)
                 return;
+            // Colors are for terminals; to the model and the summary they're noise.
+            line = AnsiEscape().Replace(line, "");
             var size = Encoding.UTF8.GetByteCount(line) + 1;
             if (_bytes + size > maxBytes)
             {
@@ -68,4 +71,8 @@ public static class ShellRunner
             _bytes += size;
         }
     }
+
+    // ESC [ ... final byte: color and cursor sequences, e.g. ESC[31;1m.
+    [GeneratedRegex(@"\x1B\[[0-9;?]*[ -/]*[@-~]")]
+    private static partial Regex AnsiEscape();
 }
