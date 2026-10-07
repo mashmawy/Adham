@@ -54,6 +54,7 @@ Run it from the folder you want to ask about: that's the agent's working directo
 | `Read` | Read a text file with line numbers; `offset`/`limit` for large files; binary files are refused |
 | `Edit` | Replace exact text in a file (unique match, or `replace_all`) |
 | `Write` | Create a file, or replace a whole file |
+| `PowerShell` / `Bash` | Run a command in the working directory: PowerShell on Windows (`pwsh` if installed), bash elsewhere |
 
 ### Changing files safely
 
@@ -61,6 +62,18 @@ Run it from the folder you want to ask about: that's the agent's working directo
 - **Read before write.** The model can only edit a file it has read this session, and can only replace a whole file it has read in full. If the file changed on disk since it was read, the change is refused until it's read again.
 - **Line endings are kept.** An edit to a CRLF file stays CRLF.
 - Writes are atomic (temp file, then swap), so a crash never leaves a half-written file.
+
+### Running commands safely
+
+Every command goes through the same gate before it runs:
+
+1. **Refused**: destructive commands never run and can't be approved: deleting a drive root, your home folder or a system folder; formatting disks; shutdown/restart; `sudo`/run-as-administrator; `git push --force`, `git reset --hard`, `git clean -f`; `DROP TABLE`; `terraform destroy`; `kubectl delete`; piping a download into a shell.
+2. **Runs right away**: read-only commands, such as `ls`/`dir`/`Get-ChildItem`, `cat`/`Get-Content`, `grep`, `find` (without `-exec`/`-delete`), and `git status`/`diff`/`log`/`show`/`blame`, plus `branch`/`tag`/`remote` when they only list.
+3. **Asks you first**: everything else, including builds and test runs (they execute project code). Adham shows the exact command and asks `Run this command? [y/N]`.
+
+A command only counts as read-only if every part of it is: `ls && rm notes.txt` asks. Anything whose effect can't be read from the text (`$(...)`, backticks, variables, redirects, script blocks, several lines) also asks, and so does anything that touches secrets (`.env`, `.ssh`, `.aws`, ...).
+
+Each call runs in a fresh process in the working directory. The default timeout is 2 minutes (maximum 10), and output over 64 KB per stream is cut.
 
 ## License
 

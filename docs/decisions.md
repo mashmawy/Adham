@@ -127,3 +127,21 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Testing Adham on another project meant typing `dotnet run --project <path>` and copying the key into every project. A coding agent should work like `git`: `cd` to the project and run it.
 - **Alternatives considered**: A `--cwd` flag (another way to say the same thing, and easy to get out of sync with relative paths in the conversation); keeping the key only in a project `.env` (has to be copied into every project).
 
+## 2026-10-07: One shell tool per platform: PowerShell on Windows, bash elsewhere
+
+- **Decision**: The model gets one shell tool, named after the shell it runs: `PowerShell` on Windows (`pwsh` 7+ if it's on PATH, else the built-in `powershell.exe`), `Bash` elsewhere (`/bin/bash`, else `sh`). Each call is a fresh process in the working directory, with `-NoProfile -NonInteractive -Command` / `-c` (not a login shell). PowerShell output is forced to UTF-8. Timeout: default 120 s, clamped to 600 s. Output is capped at 64 KB per stream. The result shows the command, `exit_code`, stdout and stderr, and after a failure a note telling the model to fix and retry or report, not to ask the user what to do.
+- **Why**: Models write the syntax of the shell they're told about; offering bash on Windows produced bash idioms that misbehave (e.g. `2>/dev/null` creating a file under Windows PowerShell). The description says whether `&&` works, because it doesn't in Windows PowerShell 5.1. Without UTF-8, Windows PowerShell garbles non-ASCII output.
+- **Alternatives considered**: Offering both shells everywhere (more to describe, more wrong-shell mistakes); keeping a persistent shell session (state leaks between calls, `cd` surprises); a login shell (user profiles change behaviour).
+
+## 2026-10-07: Every command passes a three-way gate: refuse, run, or ask
+
+- **Decision**: (1) A deny list refuses destructive commands outright, with no prompt and no way to approve them (the model is told not to try another route). (2) Read-only commands run immediately. (3) Everything else asks the user with the exact command. A command line is split at `&&`, `||`, `;`, `|` (and a lone `&` in bash) outside quotes; it counts as read-only only if every segment does and nothing in the line is "risky": command substitution, backticks, variables, redirects other than `2>&1`, subshells, script blocks, splatting, `::` calls, escapes, newlines. Arguments that point at secrets (`.env`, `.ssh`, `.aws`, `id_rsa`, ...) always ask.
+- **Why**: A prefix check alone lets `ls && rm -rf ~` through, and `ls $(rm ...)` hides a second command inside the first. Destructive commands should not depend on the user reading a prompt carefully. Without the secrets rule, a read-only `cat .env` would hand the API key to the model without asking.
+- **Alternatives considered**: Asking for every command (safe but tiring, and read-only exploration is most of what the model does); asking with a warning for destructive commands instead of refusing (one tired "y" away from losing data); a full shell parser (much larger; the splitter plus "anything unclear asks" is conservative enough).
+
+## 2026-10-07: Test runs ask, like any other command
+
+- **Decision**: `python -m unittest`, `pytest`, `dotnet test`, `npm test` and similar are not auto-allowed.
+- **Why**: Test suites execute the project's own code, which can do anything. Approving the run is one keypress and keeps the user in control.
+- **Alternatives considered**: Auto-allowing common test runners (smoother demos, but runs arbitrary project code unprompted).
+
