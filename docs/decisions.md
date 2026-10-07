@@ -157,3 +157,9 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Seen live: in a Python project the model's first calls were `Glob **/*.cs` and `Glob **/*.csproj`, copying the `**/*.cs` example from the description, before it tried `**/*.py`. Examples in a tool description act as instructions.
 - **Alternatives considered**: Examples from several languages (still steers toward the ones listed); no examples at all (models then get `*` vs `**/` wrong more often).
 
+## 2026-10-07: The system prompt asks the model to learn the project before guessing
+
+- **Decision**: The system prompt (now `SystemPrompt.Build` in Core, with tests) tells the model to start with `Glob **/*` and the README, not to guess the language or file types, to run tests with the command the project documents instead of assuming a tool such as pytest, and not to `cd` into the working directory.
+- **Why**: Measured on the same task (a Python bookstore with a documented `python -m unittest`): before, the model tried `pytest` in 4 of 4 runs (not installed: an approved command that was sure to fail), never read the README, and sometimes searched for C# files first. After, in 3 of 3 runs: first search `**/*`, README read, no `pytest`, and only the two test runs needed approval.
+- **Alternatives considered**: Leaving it to tool descriptions (the Glob examples fix alone reduced but didn't remove the guessing); a long workflow prompt (more tokens on every turn for a small context window).
+

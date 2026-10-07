@@ -19,4 +19,20 @@ public class SystemPromptTests
     {
         Prompt.Should().Contain("Read it first").And.Contain("run the tests to check your fix");
     }
+
+    [Fact]
+    public void AsksToLearnTheProjectBeforeGuessing()
+    {
+        // Seen live: C# searches in a Python project, and "pytest" tried in every run although the README
+        // says "python -m unittest" (and pytest isn't installed).
+        Prompt.Should().Contain("Glob **/*").And.Contain("README")
+            .And.Contain("test command the project documents")
+            .And.Contain("Don't assume a tool is installed");
+    }
+
+    [Fact]
+    public void SaysCommandsAlreadyRunInTheWorkingDirectory()
+    {
+        Prompt.Should().Contain("don't cd into it");
+    }
 }
