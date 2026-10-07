@@ -77,10 +77,22 @@ while (!cts.IsCancellationRequested)
 
     try
     {
+        var callNames = new Dictionary<string, string>();
         await foreach (var update in session.SendAsync(input, cts.Token))
         {
-            foreach (var call in update.Contents.OfType<FunctionCallContent>())
-                WriteDim($"\n  ⚙ {ToolCallText.Format(call.Name, call.Arguments, cwd)}\n");
+            foreach (var content in update.Contents)
+            {
+                if (content is FunctionCallContent call)
+                {
+                    callNames[call.CallId] = call.Name;
+                    WriteDim($"\n  ⚙ {ToolCallText.Format(call.Name, call.Arguments, cwd)}\n");
+                }
+                else if (content is FunctionResultContent result && callNames.TryGetValue(result.CallId, out var tool))
+                {
+                    foreach (var line in ToolResultText.Summarize(tool, result.Result))
+                        WriteDim($"    │ {line}\n");
+                }
+            }
             Console.Write(update.Text);
         }
         Console.WriteLine();

@@ -73,6 +73,8 @@ Every command goes through the same gate before it runs:
 
 A command only counts as read-only if every part of it is: `ls && rm notes.txt` asks. Anything whose effect can't be read from the text (`$(...)`, backticks, variables, redirects, script blocks, several lines) also asks, and so does anything that touches secrets (`.env`, `.ssh`, `.aws`, ...).
 
+Under each command you see its exit code and the last lines of its output (or why it was refused), so a claim like "all tests pass" is something you can check.
+
 Each call runs in a fresh process in the working directory. The default timeout is 2 minutes (maximum 10), and output over 64 KB per stream is cut.
 
 ## License

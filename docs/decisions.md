@@ -145,3 +145,9 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Test suites execute the project's own code, which can do anything. Approving the run is one keypress and keeps the user in control.
 - **Alternatives considered**: Auto-allowing common test runners (smoother demos, but runs arbitrary project code unprompted).
 
+## 2026-10-07: Show the user a summary of each command's result
+
+- **Decision**: Under each shell call the CLI prints the exit code and the last 6 non-empty output lines (or "refused: <reason>", or "timed out"). The model still receives the full result.
+- **Why**: Seen live: after running the tests, the user only saw the model's claim "All 6 tests pass". The claim was true, but the user had no way to check it on screen. Refusals were also visible only to the model.
+- **Alternatives considered**: Printing the whole output (up to 64 KB per stream floods the console); printing nothing (trust the model's summary).
+
