@@ -67,4 +67,16 @@ public sealed class GlobToolTests : IDisposable
     {
         _tool.Execute("**/*.py").Should().Be("No files found.");
     }
+
+    [Fact]
+    public void Description_UsesNoLanguageSpecificExamples()
+    {
+        // Seen live: in a Python project the model first searched "**/*.cs" and "**/*.csproj",
+        // copying the C# examples from this description.
+        var schema = _tool.AsAIFunction().JsonSchema.ToString();
+        string[] languageExamples = [".cs", ".csproj", ".py", ".ts", ".js", ".java", ".go", "Program."];
+
+        foreach (var text in new[] { _tool.Description, schema })
+            text.Should().NotContainAny(languageExamples);
+    }
 }

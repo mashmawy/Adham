@@ -16,7 +16,9 @@ public sealed class GlobTool(WorkingDirectory cwd) : ITool
 
     public string Description =>
         "Find files by path pattern. Returns paths relative to the working directory, newest first.\n" +
-        "- pattern: a glob like \"**/*.cs\" or \"src/**/Program.cs\". \"*.cs\" only matches the top folder; use \"**/\" to include subfolders.\n" +
+        "- pattern: a glob like \"**/*.<ext>\" (every file with that extension, in any folder) or \"src/**/*\". " +
+        "\"*.<ext>\" only matches the top folder; use \"**/\" to include subfolders. " +
+        "Don't know what kind of project it is yet? Start with \"**/*\".\n" +
         "- path (optional): folder to search in; defaults to the working directory.\n" +
         $"Returns at most {MaxResults} paths. Skips bin, obj, .git and node_modules.";
 
@@ -26,7 +28,7 @@ public sealed class GlobTool(WorkingDirectory cwd) : ITool
         ToolFunction.Create(Execute, Name, Description);
 
     internal string Execute(
-        [Description("Glob pattern, e.g. \"**/*.cs\".")] string pattern,
+        [Description("Glob pattern, e.g. \"**/*\" or \"**/*.<ext>\".")] string pattern,
         [Description("Folder to search in. Omit for the working directory.")] string? path = null)
     {
         if (string.IsNullOrWhiteSpace(pattern))

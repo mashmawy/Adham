@@ -151,3 +151,9 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Seen live: after running the tests, the user only saw the model's claim "All 6 tests pass". The claim was true, but the user had no way to check it on screen. Refusals were also visible only to the model.
 - **Alternatives considered**: Printing the whole output (up to 64 KB per stream floods the console); printing nothing (trust the model's summary).
 
+## 2026-10-07: Tool descriptions use language-neutral examples
+
+- **Decision**: The `Glob` description explains patterns with a placeholder (`**/*.<ext>`, `src/**/*`) and tells the model to start with `**/*` when it doesn't know the project's language. A test fails if a language-specific example (`.cs`, `.py`, `.ts`, `Program.`, ...) appears in the description or the parameter schema.
+- **Why**: Seen live: in a Python project the model's first calls were `Glob **/*.cs` and `Glob **/*.csproj`, copying the `**/*.cs` example from the description, before it tried `**/*.py`. Examples in a tool description act as instructions.
+- **Alternatives considered**: Examples from several languages (still steers toward the ones listed); no examples at all (models then get `*` vs `**/` wrong more often).
+
