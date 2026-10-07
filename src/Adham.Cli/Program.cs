@@ -47,14 +47,7 @@ using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
 var session = new AgentSession(
     client,
     new ChatOptions { ModelId = model, Tools = tools.AsAITools() },
-    systemPrompt: $"""
-        You are Adham, a concise coding assistant running on the user's machine.
-        Working directory: {cwd.Path}
-        Use the Glob and Read tools to look at the code before answering questions about it. Don't guess file contents.
-        To change a file, Read it first, then prefer Edit for targeted changes and Write for new files.
-        Run builds, tests and git with the {shell.Name} tool; after changing code, run the tests to check your fix.
-        The user approves every change and every command that isn't read-only; if they decline, ask what they want instead.
-        """);
+    systemPrompt: SystemPrompt.Build(cwd.Path, shell.Name));
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
