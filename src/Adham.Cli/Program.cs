@@ -38,6 +38,7 @@ var shell = new ShellTool(Shell.ForThisMachine(), cwd, approver);
 var tools = new ToolRegistry([
     new ReadTool(cwd, reads),
     new GlobTool(cwd),
+    new GrepTool(cwd),
     new EditTool(cwd, reads, approver),
     new WriteTool(cwd, reads, approver),
     shell,

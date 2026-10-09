@@ -18,6 +18,8 @@ public sealed class ReadTool(WorkingDirectory cwd, FileReadTracker? reads = null
         "Read a text file and return its contents with line numbers (\"    12→code\").\n" +
         "- file_path: path to the file, absolute or relative to the working directory.\n" +
         "- offset / limit (optional): 1-based first line and number of lines, for large files.\n" +
+        "After Grep, use offset and limit to read only the relevant 10-30 lines if the search excerpt was insufficient. " +
+        "Answer from sufficient search excerpts without reading the whole file.\n" +
         $"Returns at most {MaxLines} lines per call. Binary files return a placeholder; don't retry them.";
 
     public bool IsReadOnly => true;

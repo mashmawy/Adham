@@ -18,7 +18,7 @@ public sealed class ShellTool(Shell shell, WorkingDirectory cwd, ICommandApprove
         $"Each call starts a fresh process in the working directory ({cwd.Path}); nothing carries over between calls, " +
         "so don't cd: use paths relative to the working directory.\n" +
         "Use it for builds, tests, git, and anything without a dedicated tool. Don't use it to read, search, list or " +
-        "edit files when Read, Glob or Edit can do it.\n" +
+        "edit files when Read, Glob, Grep or Edit can do it.\n" +
         "Read-only commands run immediately; other commands are shown to the user, who approves or declines them; " +
         "destructive commands are refused.\n" +
         "The shell is non-interactive: avoid commands that prompt or open an editor (e.g. git rebase -i).\n" +

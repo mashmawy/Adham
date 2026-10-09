@@ -51,6 +51,7 @@ Run it from the folder you want to ask about: that's the agent's working directo
 | Tool | What the model can do with it |
 |---|---|
 | `Glob` | Find files by pattern (`**/*.cs`), relative to the working directory; skips `bin`, `obj`, `.git`, `node_modules` |
+| `Grep` | Search text with a .NET regex; whole-word matching by default (`whole_word: false` for substrings). Optional `path`, `glob`, `ignore_case`, `limit` (default 20, max 100), and `context` (0–5 nearby lines). Returns `path:line:content` excerpts capped at 12,000 characters plus a notice; skips binary files and build/dependency folders |
 | `Read` | Read a text file with line numbers; `offset`/`limit` for large files; binary files are refused |
 | `Edit` | Replace exact text in a file (unique match, or `replace_all`) |
 | `Write` | Create a file, or replace a whole file |

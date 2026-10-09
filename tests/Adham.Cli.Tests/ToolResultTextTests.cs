@@ -53,6 +53,21 @@ public class ToolResultTextTests
     }
 
     [Fact]
+    public void Grep_ShowsMatchesWithABoundedPreview()
+    {
+        ToolResultText.Summarize("Grep", "review.md:1:## C1\nreview.md:8:C1 details", maxLines: 1)
+            .Should().Equal("review.md:1:## C1", "<more search output sent to the model>");
+    }
+
+    [Theory]
+    [InlineData("No matches found.")]
+    [InlineData("Error: invalid regular expression.")]
+    public void Grep_ShowsEmptyResultsAndErrors(string result)
+    {
+        ToolResultText.Summarize("Grep", JsonSerializer.SerializeToElement(result)).Should().Equal(result);
+    }
+
+    [Fact]
     public void OtherTools_ShowNothing()
     {
         ToolResultText.Summarize("Read", "     1→hello").Should().BeEmpty();

@@ -25,7 +25,7 @@ public class SystemPromptTests
     {
         // Seen live: C# searches in a Python project, and "pytest" tried in every run although the README
         // says "python -m unittest" (and pytest isn't installed).
-        Prompt.Should().Contain("Glob **/*").And.Contain("README")
+        Prompt.Should().Contain("Don't guess the language or file types").And.Contain("README")
             .And.Contain("test command the project documents")
             .And.Contain("Don't assume a tool is installed");
     }

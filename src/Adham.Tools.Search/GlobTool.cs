@@ -15,10 +15,11 @@ public sealed class GlobTool(WorkingDirectory cwd) : ITool
     public string Name => "Glob";
 
     public string Description =>
-        "Find files by path pattern. Returns paths relative to the working directory, newest first.\n" +
+        "Find files by filename or path pattern. To search file contents for a feature, symbol or text, use Grep. " +
+        "Returns paths relative to the working directory, newest first.\n" +
         "- pattern: a glob like \"**/*.<ext>\" (every file with that extension, in any folder) or \"src/**/*\". " +
         "\"*.<ext>\" only matches the top folder; use \"**/\" to include subfolders. " +
-        "Don't know what kind of project it is yet? Start with \"**/*\".\n" +
+        "Use a broad pattern only when you need to explore the project structure.\n" +
         "- path (optional): folder to search in; defaults to the working directory.\n" +
         $"Returns at most {MaxResults} paths. Skips bin, obj, .git and node_modules.";
 
