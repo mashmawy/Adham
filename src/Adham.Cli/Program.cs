@@ -42,6 +42,7 @@ var tools = new ToolRegistry([
     new EditTool(cwd, reads, approver),
     new WriteTool(cwd, reads, approver),
     shell,
+    new AskUserTool(approver),
 ]);
 
 using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);

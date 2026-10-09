@@ -3,7 +3,7 @@ using Adham.Tools.Abstractions;
 namespace Adham.Cli;
 
 // Asks the user in the console before a file change or a command. Anything but "y"/"yes" is a no.
-internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool color) : IChangeApprover, ICommandApprover
+internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool color) : IChangeApprover, ICommandApprover, IQuestionApprover
 {
     public static ConsoleApprover ForConsole() => new(Console.In, Console.Out, color: !Console.IsOutputRedirected);
 
@@ -24,6 +24,16 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         Write(ConsoleColor.Yellow, $"    {request.Command}");
 
         return Ask("  Run this command? [y/N] ");
+    }
+
+    public ValueTask<string> AskUserAsync(string question, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return ValueTask.FromResult("");
+
+        output.Write($"\n  ? {question}\n  > ");
+        var answer = input.ReadLine() ?? "";
+        return ValueTask.FromResult(answer);
     }
 
     private ValueTask<bool> Ask(string question)
