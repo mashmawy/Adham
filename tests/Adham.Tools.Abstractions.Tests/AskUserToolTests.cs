@@ -6,7 +6,7 @@ namespace Adham.Tools.Abstractions.Tests;
 
 public sealed class AskUserToolTests
 {
-    private sealed class FakeQuestionApprover : IQuestionApprover
+    private sealed class FakeQuestioner : IUserQuestioner
     {
         public string? LastQuestion;
         public string Answer = "test answer";
@@ -21,21 +21,21 @@ public sealed class AskUserToolTests
     [Fact]
     public void Name_IsAskUser()
     {
-        var tool = new AskUserTool(new FakeQuestionApprover());
+        var tool = new AskUserTool(new FakeQuestioner());
         tool.Name.Should().Be("AskUser");
     }
 
     [Fact]
     public void IsReadOnly_IsTrue()
     {
-        var tool = new AskUserTool(new FakeQuestionApprover());
+        var tool = new AskUserTool(new FakeQuestioner());
         tool.IsReadOnly.Should().BeTrue();
     }
 
     [Fact]
     public async Task ReturnsTheAnswerPrefixed()
     {
-        var approver = new FakeQuestionApprover();
+        var approver = new FakeQuestioner();
         var tool = new AskUserTool(approver);
 
         var result = await tool.AskAsync("What's the project name?", CancellationToken.None);
@@ -47,7 +47,7 @@ public sealed class AskUserToolTests
     [Fact]
     public async Task EmptyQuestion_ReturnsError()
     {
-        var tool = new AskUserTool(new FakeQuestionApprover());
+        var tool = new AskUserTool(new FakeQuestioner());
 
         var result = await tool.AskAsync("", CancellationToken.None);
 
@@ -57,7 +57,7 @@ public sealed class AskUserToolTests
     [Fact]
     public async Task NullQuestion_ReturnsError()
     {
-        var tool = new AskUserTool(new FakeQuestionApprover());
+        var tool = new AskUserTool(new FakeQuestioner());
 
         var result = await tool.AskAsync(null!, CancellationToken.None);
 
@@ -67,7 +67,7 @@ public sealed class AskUserToolTests
     [Fact]
     public async Task WhitespaceOnly_ReturnsError()
     {
-        var tool = new AskUserTool(new FakeQuestionApprover());
+        var tool = new AskUserTool(new FakeQuestioner());
 
         var result = await tool.AskAsync("   ", CancellationToken.None);
 
@@ -77,7 +77,7 @@ public sealed class AskUserToolTests
     [Fact]
     public void Schema_HasRequiredQuestion()
     {
-        var tool = new AskUserTool(new FakeQuestionApprover());
+        var tool = new AskUserTool(new FakeQuestioner());
         var schema = tool.AsAIFunction().JsonSchema.ToString();
 
         schema.Should().Contain("\"question\"").And.Contain("\"required\":[\"question\"]");

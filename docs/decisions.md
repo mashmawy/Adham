@@ -157,6 +157,12 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Seen live: in a Python project the model's first calls were `Glob **/*.cs` and `Glob **/*.csproj`, copying the `**/*.cs` example from the description, before it tried `**/*.py`. Examples in a tool description act as instructions.
 - **Alternatives considered**: Examples from several languages (still steers toward the ones listed); no examples at all (models then get `*` vs `**/` wrong more often).
 
+## 2026-10-09: AskUser tool — freeform questions via a separate interface
+
+- **Decision**: `AskUserTool` lives in `Adham.Tools.Abstractions`, implements `ITool`, and delegates to an `IUserQuestioner` (not `IChangeApprover`/`ICommandApprover`). The console implementation trims the answer, returns distinct messages for cancellation, EOF, and empty input, and only accepts a single-line answer.
+- **Why**: Asking for information is fundamentally different from approving a file change or command — it's not yes/no, so it shouldn't share the approval interfaces. Distinct no-answer messages prevent the model from guessing when the user cancels or hits EOF. The tool stays in `Abstractions` for now to avoid adding another project until more interaction tools arrive; moving it to its own project should happen when a second tool needs it.
+- **Alternatives considered**: Adding `AskUserAsync` to `IChangeApprover`/`ICommandApprover` (blurs approval with information-gathering); keeping the answer empty on cancellation (the model would then hallucinate the missing value).
+
 ## 2026-10-07: The system prompt asks the model to learn the project before guessing
 
 - **Decision**: The system prompt (now `SystemPrompt.Build` in Core, with tests) tells the model to start with `Glob **/*` and the README, not to guess the language or file types, to run tests with the command the project documents instead of assuming a tool such as pytest, and not to `cd` into the working directory.

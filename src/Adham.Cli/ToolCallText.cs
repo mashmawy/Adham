@@ -8,7 +8,7 @@ namespace Adham.Cli;
 internal static class ToolCallText
 {
     public static string Format(string name, IDictionary<string, object?>? args, WorkingDirectory cwd) =>
-        args is null
+        args is null || name == "AskUser"
             ? $"{name}()"
             : $"{name}({string.Join(", ", args.Select(a => $"{a.Key}: {Shorten(Text(a.Value), cwd)}"))})";
 

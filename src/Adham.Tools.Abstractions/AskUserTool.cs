@@ -1,11 +1,10 @@
 using System.ComponentModel;
-using Adham.Tools.Abstractions;
 using Microsoft.Extensions.AI;
 
 namespace Adham.Tools.Abstractions;
 
 // Asks the user a freeform question and returns their answer.
-public sealed class AskUserTool(IQuestionApprover approver) : ITool
+public sealed class AskUserTool(IUserQuestioner approver) : ITool
 {
     public string Name => "AskUser";
 

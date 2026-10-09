@@ -3,7 +3,7 @@ using Adham.Tools.Abstractions;
 namespace Adham.Cli;
 
 // Asks the user in the console before a file change or a command. Anything but "y"/"yes" is a no.
-internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool color) : IChangeApprover, ICommandApprover, IQuestionApprover
+internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool color) : IChangeApprover, ICommandApprover, IUserQuestioner
 {
     public static ConsoleApprover ForConsole() => new(Console.In, Console.Out, color: !Console.IsOutputRedirected);
 
@@ -29,11 +29,19 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
     public ValueTask<string> AskUserAsync(string question, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
-            return ValueTask.FromResult("");
+            return ValueTask.FromResult("The user cancelled before answering.");
 
         output.Write($"\n  ? {question}\n  > ");
-        var answer = input.ReadLine() ?? "";
-        return ValueTask.FromResult(answer);
+        var answer = input.ReadLine();
+
+        if (answer is null)
+            return ValueTask.FromResult("The user gave no answer (end of input).");
+
+        var trimmed = answer.Trim();
+        if (trimmed.Length == 0)
+            return ValueTask.FromResult("The user gave no answer.");
+
+        return ValueTask.FromResult(trimmed);
     }
 
     private ValueTask<bool> Ask(string question)

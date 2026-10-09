@@ -1,7 +1,7 @@
 namespace Adham.Tools.Abstractions;
 
-// Asked before returning a freeform user answer to the model.
-public interface IQuestionApprover
+// Asks the user a freeform question and returns their answer.
+public interface IUserQuestioner
 {
     ValueTask<string> AskUserAsync(string question, CancellationToken cancellationToken);
 }
