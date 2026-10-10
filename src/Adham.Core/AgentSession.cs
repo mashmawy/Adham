@@ -27,11 +27,17 @@ public sealed class AgentSession
     // How the most recent completed turn ended (null before the first one).
     public TurnOutcome? LastTurn { get; private set; }
 
+    // Tokens the conversation takes up in the model's context, as the server counted them on the
+    // latest call (prompt + reply). Null until a server reports usage, and again after Clear.
+    // The server's count is the real one: it includes the tool schemas, which no text estimate sees.
+    public long? ContextTokens { get; private set; }
+
     // Start over: keep the system prompt, forget the conversation (and everything the tools returned).
     public void Clear()
     {
         var keep = _history.Count > 0 && _history[0].Role == ChatRole.System ? 1 : 0;
         _history.RemoveRange(keep, _history.Count - keep);
+        ContextTokens = null;
     }
 
     public async IAsyncEnumerable<ChatResponseUpdate> SendAsync(
@@ -39,6 +45,7 @@ public sealed class AgentSession
         [EnumeratorCancellation] CancellationToken ct)
     {
         var turnStart = _history.Count;
+        var tokensBefore = ContextTokens;
         _history.Add(new ChatMessage(ChatRole.User, text));
 
         var completed = false;
@@ -54,6 +61,8 @@ public sealed class AgentSession
                 {
                     updates.Add(update);
                     outcome.Observe(update);
+                    foreach (var usage in update.Contents.OfType<UsageContent>())
+                        ContextTokens = usage.Details.TotalTokenCount ?? usage.Details.InputTokenCount + usage.Details.OutputTokenCount ?? ContextTokens;
                     yield return update;
                 }
 
@@ -82,7 +91,10 @@ public sealed class AgentSession
             // A failed or cancelled turn leaves no trace. Otherwise a message the server rejected
             // (e.g. context_length_exceeded) stays in the history and every later turn fails too.
             if (!completed)
+            {
                 _history.RemoveRange(turnStart, _history.Count - turnStart);
+                ContextTokens = tokensBefore;
+            }
         }
     }
 }
