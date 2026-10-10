@@ -93,6 +93,8 @@ while (!cts.IsCancellationRequested)
         Console.WriteLine();
         if (session.LastTurn?.Note is { } note)
             WriteDim($"  ({note})\n");
+        if (ContextText.Format(session.ContextTokens, served.ContextLength) is { } context)
+            WriteDim($"  {context}\n");
     }
     catch (Exception ex) when (ServerErrors.IsServerError(ex))
     {
