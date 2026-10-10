@@ -153,6 +153,17 @@ public class ConsoleApproverTests
     }
 
     [Fact]
+    public async Task AskUser_OptionNumber_ShowsThePickedOption()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("2\n"), output, color: false);
+
+        await approver.AskUserAsync("Which license?", ["MIT", "Apache-2.0"], CancellationToken.None);
+
+        output.ToString().Should().EndWith("  (Apache-2.0)" + Environment.NewLine);
+    }
+
+    [Fact]
     public async Task AskUser_NumberWithoutOptions_IsTheAnswer()
     {
         var answer = await AskUser("42\n", "How many?");

@@ -53,7 +53,10 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
             if (options is not { Length: > 0 } || !int.TryParse(trimmed, out var num))
                 return ValueTask.FromResult(trimmed);
             if (num >= 1 && num <= options.Length)
+            {
+                output.WriteLine($"  ({options[num - 1]})");
                 return ValueTask.FromResult(options[num - 1]);
+            }
 
             output.Write($"  Pick 1-{options.Length}, or type an answer.\n  > ");
         }
