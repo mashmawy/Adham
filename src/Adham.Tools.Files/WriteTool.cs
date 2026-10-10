@@ -30,6 +30,8 @@ public sealed class WriteTool(WorkingDirectory cwd, FileReadTracker reads, IChan
     {
         if (string.IsNullOrWhiteSpace(file_path))
             return "Error: file_path is required.";
+        if (ContextNotes.Refusal(content, "content") is { } note)
+            return note;
 
         var fullPath = cwd.Resolve(file_path);
         if (Directory.Exists(fullPath))

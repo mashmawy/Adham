@@ -37,6 +37,9 @@ public sealed class EditTool(WorkingDirectory cwd, FileReadTracker reads, IChang
         if (string.IsNullOrWhiteSpace(file_path))
             return "Error: file_path is required.";
 
+        if (ContextNotes.Refusal(new_string, "new_string") is { } note)
+            return note;
+
         var oldText = Lf(old_string ?? "");
         var newText = Lf(new_string ?? "");
         if (oldText == newText)
