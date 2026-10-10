@@ -38,12 +38,13 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         output.Write("\n  > ");
         var answer = input.ReadLine();
 
+        // Without an answer small models tend to make one up, so say what to do instead.
         if (answer is null)
-            return ValueTask.FromResult("The user gave no answer (end of input).");
+            return ValueTask.FromResult($"The user gave no answer (end of input). {DontGuess}");
 
         var trimmed = answer.Trim();
         if (trimmed.Length == 0)
-            return ValueTask.FromResult("The user gave no answer.");
+            return ValueTask.FromResult($"The user gave no answer. {DontGuess}");
 
         // A number picks that option; anything else is the answer as typed.
         if (options is not null && options.Length > 0 && int.TryParse(trimmed, out var num) && num >= 1 && num <= options.Length)
@@ -51,6 +52,8 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
 
         return ValueTask.FromResult(trimmed);
     }
+
+    private const string DontGuess = "Don't guess it: continue without it, or stop and say what you need.";
 
     private ValueTask<bool> Ask(string question)
     {

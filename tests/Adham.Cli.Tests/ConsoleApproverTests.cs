@@ -96,14 +96,14 @@ public class ConsoleApproverTests
     public async Task AskUser_EmptyLine_ReturnsNoAnswerMessage()
     {
         var answer = await AskUser("\n", "What is it?");
-        answer.Should().Be("The user gave no answer.");
+        answer.Should().StartWith("The user gave no answer.").And.Contain("Don't guess it");
     }
 
     [Fact]
     public async Task AskUser_EOF_ReturnsNoAnswerMessage()
     {
         var answer = await AskUser("", "What is it?");
-        answer.Should().Be("The user gave no answer (end of input).");
+        answer.Should().StartWith("The user gave no answer (end of input).").And.Contain("Don't guess it");
     }
 
     [Fact]
