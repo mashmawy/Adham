@@ -7,8 +7,11 @@ namespace Adham.Cli;
 // directory those are shown relative, so the line stays readable.
 internal static class ToolCallText
 {
+    // Tools whose arguments should be hidden from the console summary.
+    private static readonly HashSet<string> HideArgs = new() { "AskUser" };
+
     public static string Format(string name, IDictionary<string, object?>? args, WorkingDirectory cwd) =>
-        args is null || name == "AskUser"
+        args is null || HideArgs.Contains(name)
             ? $"{name}()"
             : $"{name}({string.Join(", ", args.Select(a => $"{a.Key}: {Shorten(Text(a.Value), cwd)}"))})";
 

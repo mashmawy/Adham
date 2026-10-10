@@ -82,7 +82,7 @@ public class ConsoleApproverTests
     {
         using var output = new StringWriter();
         var approver = new ConsoleApprover(new StringReader(typed), output, color: false);
-        return await approver.AskUserAsync(question, CancellationToken.None);
+        return await approver.AskUserAsync(question, null, CancellationToken.None);
     }
 
     [Fact]
@@ -111,8 +111,56 @@ public class ConsoleApproverTests
     {
         using var output = new StringWriter();
         var approver = new ConsoleApprover(new StringReader("y\n"), output, color: false);
-        await approver.AskUserAsync("What is the project name?", CancellationToken.None);
+        await approver.AskUserAsync("What is the project name?", null, CancellationToken.None);
 
         output.ToString().Should().Contain("\n  ? What is the project name?\n  > ");
+    }
+
+    [Fact]
+    public async Task AskUser_WithOptionNumber_ReturnsSelectedOption()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("2\n"), output, color: false);
+        var options = new[] { "First", "Second", "Third" };
+
+        var answer = await approver.AskUserAsync("Pick one", options, CancellationToken.None);
+
+        answer.Should().Be("Second");
+    }
+
+    [Fact]
+    public async Task AskUser_WithOptionTypingFullAnswer_ReturnsTypedAnswer()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("Custom\n"), output, color: false);
+        var options = new[] { "First", "Second" };
+
+        var answer = await approver.AskUserAsync("Pick one", options, CancellationToken.None);
+
+        answer.Should().Be("Custom");
+    }
+
+    [Fact]
+    public async Task AskUser_WithOptionNumberInOutput()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("1\n"), output, color: false);
+        var options = new[] { "Yes", "No" };
+
+        await approver.AskUserAsync("Continue?", options, CancellationToken.None);
+
+        output.ToString().Should().Contain("\n  ? Continue?\n    1. Yes\n    2. No\n  > ");
+    }
+
+    [Fact]
+    public async Task AskUser_Cancelled_ThrowsWithoutAsking()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("answer\n"), output, color: false);
+
+        var ask = async () => await approver.AskUserAsync("What is it?", null, new CancellationToken(canceled: true));
+
+        await ask.Should().ThrowAsync<OperationCanceledException>();
+        output.ToString().Should().BeEmpty();
     }
 }

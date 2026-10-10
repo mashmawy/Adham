@@ -35,4 +35,11 @@ public class SystemPromptTests
     {
         Prompt.Should().Contain("don't cd into it");
     }
+
+    [Fact]
+    public void SaysToAskTheUserWithTheAskUserTool()
+    {
+        // Seen live: the model asked for the user's name in plain text and ended its turn instead of calling AskUser.
+        Prompt.Should().Contain("call the AskUser tool");
+    }
 }

@@ -52,4 +52,12 @@ public class ToolCallTextTests
     {
         ToolCallText.Format("Glob", null, Cwd).Should().Be("Glob()");
     }
+
+    [Fact]
+    public void AskUser_HidesTheQuestion_WhichThePromptShowsAnyway()
+    {
+        var args = new Dictionary<string, object?> { ["question"] = "What is your name?" };
+
+        ToolCallText.Format("AskUser", args, Cwd).Should().Be("AskUser()");
+    }
 }

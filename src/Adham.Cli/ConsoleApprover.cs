@@ -26,12 +26,16 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         return Ask("  Run this command? [y/N] ");
     }
 
-    public ValueTask<string> AskUserAsync(string question, CancellationToken cancellationToken)
+    // Ctrl+C (a cancelled token) throws, like every other cancelled step; the chat loop then exits.
+    public ValueTask<string> AskUserAsync(string question, string[]? options, CancellationToken cancellationToken)
     {
-        if (cancellationToken.IsCancellationRequested)
-            return ValueTask.FromResult("The user cancelled before answering.");
+        cancellationToken.ThrowIfCancellationRequested();
 
-        output.Write($"\n  ? {question}\n  > ");
+        output.Write($"\n  ? {question}");
+        for (var i = 0; i < (options?.Length ?? 0); i++)
+            output.Write($"\n    {i + 1}. {options![i]}");
+
+        output.Write("\n  > ");
         var answer = input.ReadLine();
 
         if (answer is null)
@@ -40,6 +44,10 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         var trimmed = answer.Trim();
         if (trimmed.Length == 0)
             return ValueTask.FromResult("The user gave no answer.");
+
+        // A number picks that option; anything else is the answer as typed.
+        if (options is not null && options.Length > 0 && int.TryParse(trimmed, out var num) && num >= 1 && num <= options.Length)
+            return ValueTask.FromResult(options[num - 1]);
 
         return ValueTask.FromResult(trimmed);
     }

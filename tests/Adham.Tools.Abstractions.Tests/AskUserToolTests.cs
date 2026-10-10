@@ -1,5 +1,6 @@
 using Adham.Tools.Abstractions;
 using FluentAssertions;
+using Microsoft.Extensions.AI;
 using Xunit;
 
 namespace Adham.Tools.Abstractions.Tests;
@@ -9,11 +10,13 @@ public sealed class AskUserToolTests
     private sealed class FakeQuestioner : IUserQuestioner
     {
         public string? LastQuestion;
+        public string[]? LastOptions;
         public string Answer = "test answer";
 
-        public ValueTask<string> AskUserAsync(string question, CancellationToken cancellationToken)
+        public ValueTask<string> AskUserAsync(string question, string[]? options, CancellationToken cancellationToken)
         {
             LastQuestion = question;
+            LastOptions = options;
             return ValueTask.FromResult(Answer);
         }
     }
@@ -35,13 +38,13 @@ public sealed class AskUserToolTests
     [Fact]
     public async Task ReturnsTheAnswerPrefixed()
     {
-        var approver = new FakeQuestioner();
-        var tool = new AskUserTool(approver);
+        var questioner = new FakeQuestioner();
+        var tool = new AskUserTool(questioner);
 
-        var result = await tool.AskAsync("What's the project name?", CancellationToken.None);
+        var result = await tool.AskAsync("What's the project name?", cancellationToken: CancellationToken.None);
 
         result.Should().Be("User response: test answer");
-        approver.LastQuestion.Should().Be("What's the project name?");
+        questioner.LastQuestion.Should().Be("What's the project name?");
     }
 
     [Fact]
@@ -49,7 +52,7 @@ public sealed class AskUserToolTests
     {
         var tool = new AskUserTool(new FakeQuestioner());
 
-        var result = await tool.AskAsync("", CancellationToken.None);
+        var result = await tool.AskAsync("", cancellationToken: CancellationToken.None);
 
         result.Should().Be("Error: question is required.");
     }
@@ -59,7 +62,7 @@ public sealed class AskUserToolTests
     {
         var tool = new AskUserTool(new FakeQuestioner());
 
-        var result = await tool.AskAsync(null!, CancellationToken.None);
+        var result = await tool.AskAsync(null!, cancellationToken: CancellationToken.None);
 
         result.Should().Be("Error: question is required.");
     }
@@ -69,7 +72,7 @@ public sealed class AskUserToolTests
     {
         var tool = new AskUserTool(new FakeQuestioner());
 
-        var result = await tool.AskAsync("   ", CancellationToken.None);
+        var result = await tool.AskAsync("   ", cancellationToken: CancellationToken.None);
 
         result.Should().Be("Error: question is required.");
     }
@@ -81,5 +84,42 @@ public sealed class AskUserToolTests
         var schema = tool.AsAIFunction().JsonSchema.ToString();
 
         schema.Should().Contain("\"question\"").And.Contain("\"required\":[\"question\"]");
+    }
+
+    [Fact]
+    public async Task WithOptions_PassesOptionsThrough()
+    {
+        var questioner = new FakeQuestioner();
+        var tool = new AskUserTool(questioner);
+        var options = new[] { "Yes", "No", "Maybe" };
+
+        await tool.AskAsync("Pick one", options: options);
+
+        questioner.LastOptions.Should().BeEquivalentTo(options);
+    }
+
+    [Fact]
+    public void Schema_HasOptionalOptions()
+    {
+        var tool = new AskUserTool(new FakeQuestioner());
+        var schema = tool.AsAIFunction().JsonSchema.ToString();
+
+        schema.Should().Contain("\"options\"");
+    }
+
+    [Fact]
+    public async Task InvokedThroughTheAIFunction_ReturnsPlainText()
+    {
+        var questioner = new FakeQuestioner();
+        var function = new AskUserTool(questioner).AsAIFunction();
+
+        var result = await function.InvokeAsync(new AIFunctionArguments
+        {
+            ["question"] = "Which license?",
+            ["options"] = new[] { "MIT", "Apache-2.0" },
+        });
+
+        result.Should().Be("User response: test answer");
+        questioner.LastOptions.Should().Equal("MIT", "Apache-2.0");
     }
 }

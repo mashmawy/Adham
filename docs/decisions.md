@@ -157,15 +157,14 @@ Non-obvious choices made while building Adham, newest last. Each entry is dated 
 - **Why**: Seen live: in a Python project the model's first calls were `Glob **/*.cs` and `Glob **/*.csproj`, copying the `**/*.cs` example from the description, before it tried `**/*.py`. Examples in a tool description act as instructions.
 - **Alternatives considered**: Examples from several languages (still steers toward the ones listed); no examples at all (models then get `*` vs `**/` wrong more often).
 
-## 2026-10-09: AskUser tool — freeform questions via a separate interface
-
-- **Decision**: `AskUserTool` lives in `Adham.Tools.Abstractions`, implements `ITool`, and delegates to an `IUserQuestioner` (not `IChangeApprover`/`ICommandApprover`). The console implementation trims the answer, returns distinct messages for cancellation, EOF, and empty input, and only accepts a single-line answer.
-- **Why**: Asking for information is fundamentally different from approving a file change or command — it's not yes/no, so it shouldn't share the approval interfaces. Distinct no-answer messages prevent the model from guessing when the user cancels or hits EOF. The tool stays in `Abstractions` for now to avoid adding another project until more interaction tools arrive; moving it to its own project should happen when a second tool needs it.
-- **Alternatives considered**: Adding `AskUserAsync` to `IChangeApprover`/`ICommandApprover` (blurs approval with information-gathering); keeping the answer empty on cancellation (the model would then hallucinate the missing value).
-
 ## 2026-10-07: The system prompt asks the model to learn the project before guessing
 
 - **Decision**: The system prompt (now `SystemPrompt.Build` in Core, with tests) tells the model to start with `Glob **/*` and the README, not to guess the language or file types, to run tests with the command the project documents instead of assuming a tool such as pytest, and not to `cd` into the working directory.
 - **Why**: Measured on the same task (a Python bookstore with a documented `python -m unittest`): before, the model tried `pytest` in 4 of 4 runs (not installed: an approved command that was sure to fail), never read the README, and sometimes searched for C# files first. After, in 3 of 3 runs: first search `**/*`, README read, no `pytest`, and only the two test runs needed approval.
 - **Alternatives considered**: Leaving it to tool descriptions (the Glob examples fix alone reduced but didn't remove the guessing); a long workflow prompt (more tokens on every turn for a small context window).
 
+## 2026-10-09: AskUser tool: freeform questions via a separate interface
+
+- **Decision**: `AskUserTool` lives in `Adham.Tools.Abstractions` and delegates to an `IUserQuestioner` (not `IChangeApprover`/`ICommandApprover`). It takes a question and optional numbered options; the user answers in one line, and a valid option number returns that option's text. The console implementation trims the answer and returns distinct messages for an empty line and end of input. A cancelled token (Ctrl+C) throws, like every other cancelled step. The system prompt tells the model to call AskUser when it needs information only the user has. It runs through the normal `UseFunctionInvocation()` loop: the tool simply waits for the answer.
+- **Why**: Asking for information is not a yes/no approval, so it shouldn't share the approval interfaces. Distinct no-answer messages keep the model from guessing a value the user never gave. Seen live: with the tool registered but no system-prompt line, the model asked for the user's name in plain text and ended its turn. The tool stays in `Abstractions` until a second interaction tool justifies its own project.
+- **Alternatives considered**: Adding `AskUserAsync` to the approver interfaces (mixes approval with information-gathering); returning an empty answer on cancellation or EOF (the model then invents the missing value); middleware that intercepts AskUser calls (unnecessary: the function-invocation loop already awaits the tool); relying on plain-text questions alone (they end the turn, so a multi-step task can't continue with the answer).
