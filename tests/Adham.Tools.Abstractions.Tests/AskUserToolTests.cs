@@ -99,6 +99,26 @@ public sealed class AskUserToolTests
     }
 
     [Fact]
+    public async Task BlankOptions_AreDropped()
+    {
+        var questioner = new FakeQuestioner();
+
+        await new AskUserTool(questioner).AskAsync("Pick one", options: ["MIT", "", "  ", " Apache-2.0 "]);
+
+        questioner.LastOptions.Should().Equal("MIT", "Apache-2.0");
+    }
+
+    [Fact]
+    public async Task OnlyBlankOptions_AskWithoutOptions()
+    {
+        var questioner = new FakeQuestioner();
+
+        await new AskUserTool(questioner).AskAsync("Name?", options: ["", " "]);
+
+        questioner.LastOptions.Should().BeNull();
+    }
+
+    [Fact]
     public void Schema_HasOptionalOptions()
     {
         var tool = new AskUserTool(new FakeQuestioner());

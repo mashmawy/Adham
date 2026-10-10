@@ -26,7 +26,9 @@ public sealed class AskUserTool(IUserQuestioner questioner) : ITool
         if (string.IsNullOrWhiteSpace(question))
             return "Error: question is required.";
 
-        var answer = await questioner.AskUserAsync(question, options, cancellationToken).ConfigureAwait(false);
+        // Blank options would still get a number on screen.
+        var choices = options?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToArray();
+        var answer = await questioner.AskUserAsync(question, choices is { Length: > 0 } ? choices : null, cancellationToken).ConfigureAwait(false);
         return $"User response: {answer}";
     }
 }
