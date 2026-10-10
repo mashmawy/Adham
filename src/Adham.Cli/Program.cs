@@ -74,6 +74,7 @@ while (!cts.IsCancellationRequested)
     try
     {
         var callNames = new Dictionary<string, string>();
+        var contextShown = session.ContextTokens;
         await foreach (var update in session.SendAsync(input, cts.Token))
         {
             foreach (var content in update.Contents)
@@ -87,6 +88,13 @@ while (!cts.IsCancellationRequested)
                 {
                     foreach (var line in ToolResultText.Summarize(tool, result.Result))
                         WriteDim($"    │ {line}\n");
+
+                    // Seen live: one long turn went from 22% to full with nothing on screen in between.
+                    if (session.ContextTokens != contextShown && ContextText.Format(session.ContextTokens, served.ContextLength) is { } sofar)
+                    {
+                        WriteDim($"    │ {sofar}\n");
+                        contextShown = session.ContextTokens;
+                    }
                 }
             }
             Console.Write(update.Text);
