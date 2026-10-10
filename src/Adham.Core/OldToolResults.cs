@@ -49,23 +49,44 @@ internal static class OldToolResults
         return sent;
     }
 
+    // What a round adds to the context: its results, and its call arguments (a Write's whole file).
     private static int Size(IList<ChatMessage> messages, int start, int end) =>
-        messages.Skip(start).Take(end - start)
-            .SelectMany(m => m.Contents.OfType<FunctionResultContent>())
-            .Sum(r => Text(r.Result)?.Length ?? 0);
+        messages.Skip(start).Take(end - start).SelectMany(m => m.Contents).Sum(content => content switch
+        {
+            FunctionResultContent result => Text(result.Result)?.Length ?? 0,
+            FunctionCallContent call => call.Arguments?.Sum(a => Text(a.Value)?.Length ?? 0) ?? 0,
+            _ => 0,
+        });
 
-    // A new message (the original belongs to the history) with long results replaced by notes.
+    // A new message (the original belongs to the history) with long results and arguments replaced by notes.
     private static ChatMessage ShortenMessage(ChatMessage message, Dictionary<string, FunctionCallContent> calls)
     {
-        if (!message.Contents.Any(c => c is FunctionResultContent r && Text(r.Result) is { Length: > KeepUpToChars }))
+        if (!message.Contents.Any(IsLong))
             return message;
 
-        var contents = message.Contents.Select(content =>
-            content is FunctionResultContent result && Text(result.Result) is { Length: > KeepUpToChars } text
-                ? new FunctionResultContent(result.CallId, Note(calls.GetValueOrDefault(result.CallId), text))
-                : content).ToList();
+        var contents = message.Contents.Select(content => content switch
+        {
+            FunctionResultContent result when IsLong(result) =>
+                new FunctionResultContent(result.CallId, Note(calls.GetValueOrDefault(result.CallId), Text(result.Result)!)),
+            FunctionCallContent call when IsLong(call) =>
+                new FunctionCallContent(call.CallId, call.Name, call.Arguments!.ToDictionary(a => a.Key, a => ShortenArgument(a.Value))),
+            _ => content,
+        }).ToList();
         return new ChatMessage(message.Role, contents) { AuthorName = message.AuthorName, MessageId = message.MessageId };
     }
+
+    private static bool IsLong(AIContent content) => content switch
+    {
+        FunctionResultContent result => Text(result.Result) is { Length: > KeepUpToChars },
+        FunctionCallContent { Arguments: { } args } => args.Values.Any(v => Text(v) is { Length: > KeepUpToChars }),
+        _ => false,
+    };
+
+    // The call already ran, so a long argument (a file written, an edit's text) is on disk now.
+    private static object? ShortenArgument(object? value) =>
+        Text(value) is { Length: > KeepUpToChars } text
+            ? $"[{text.Count(c => c == '\n') + 1} lines, removed to save context]"
+            : value;
 
     internal static string Note(FunctionCallContent? call, string text)
     {
