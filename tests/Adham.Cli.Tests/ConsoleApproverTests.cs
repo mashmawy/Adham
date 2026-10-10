@@ -77,4 +77,42 @@ public class ConsoleApproverTests
             .And.Contain("Run this command? [y/N]")
             .And.Contain("(approved)");
     }
+
+    private static async Task<string> AskUser(string typed, string question)
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader(typed), output, color: false);
+        return await approver.AskUserAsync(question, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task AskUser_ReturnsTrimmedAnswer()
+    {
+        var answer = await AskUser("  hello world  \n", "What is it?");
+        answer.Should().Be("hello world");
+    }
+
+    [Fact]
+    public async Task AskUser_EmptyLine_ReturnsNoAnswerMessage()
+    {
+        var answer = await AskUser("\n", "What is it?");
+        answer.Should().Be("The user gave no answer.");
+    }
+
+    [Fact]
+    public async Task AskUser_EOF_ReturnsNoAnswerMessage()
+    {
+        var answer = await AskUser("", "What is it?");
+        answer.Should().Be("The user gave no answer (end of input).");
+    }
+
+    [Fact]
+    public async Task AskUser_ShowsPromptFormat()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("y\n"), output, color: false);
+        await approver.AskUserAsync("What is the project name?", CancellationToken.None);
+
+        output.ToString().Should().Contain("\n  ? What is the project name?\n  > ");
+    }
 }

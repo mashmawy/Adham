@@ -21,7 +21,7 @@ Projects so far (dependencies point down):
 - `Adham.Tools.Shell`: `ShellTool` (PowerShell on Windows, Bash elsewhere), `ShellRunner` (CliWrap), `CommandSplitter`, `DenyRules`, `ReadOnlyRules`. Every command: deny → read-only → ask via `ICommandApprover`.
 - `Adham.Tools.Files`: `ReadTool`, `EditTool`, `WriteTool`, `FileReadTracker` (read-before-write rules). `Adham.Tools.Search`: `GlobTool`.
 - `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client with `UseFunctionInvocation()`, loaded-model lookup), `AgentSession` (streaming, history including tool calls and results). Core does not reference the tools.
-- `Adham.Tools.Abstractions`: `ITool`, `ToolRegistry`, `ToolFunction`, `WorkingDirectory`, `IChangeApprover`/`FileChange`, `ICommandApprover`/`CommandRequest`.
+- `Adham.Tools.Abstractions`: `ITool`, `ToolRegistry`, `ToolFunction`, `WorkingDirectory`, `IChangeApprover`/`FileChange`, `ICommandApprover`/`CommandRequest`, `IUserQuestioner`, `AskUserTool`.
 - `Adham.Common`: `AdhamEnvironment` (`ADHAM_API_KEY`, `ADHAM_BASE_URL`, `ADHAM_MODEL`).
 
 Tests use `FakeChatClient` (in `Adham.Core.Tests`) instead of a real model.
