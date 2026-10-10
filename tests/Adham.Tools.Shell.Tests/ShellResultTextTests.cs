@@ -38,6 +38,6 @@ public class ShellResultTextTests
     {
         var text = ShellResultText.Format(Bash, "cat big.log", new ShellResult(0, "a\n", "", false, true, false));
 
-        text.Should().Contain("[stdout cut at 64 KB: narrow the command");
+        text.Should().Contain("[stdout over 16 KB: the start and the end are kept, the middle is cut. Narrow the command");
     }
 }

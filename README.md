@@ -76,7 +76,7 @@ A command only counts as read-only if every part of it is: `ls && rm notes.txt` 
 
 Under each command you see its exit code and the last lines of its output (or why it was refused), so a claim like "all tests pass" is something you can check.
 
-Each call runs in a fresh process in the working directory. The default timeout is 2 minutes (maximum 10), and output over 64 KB per stream is cut.
+Each call runs in a fresh process in the working directory. The default timeout is 2 minutes (maximum 10), and output over 16 KB per stream is cut in the middle: the start and the end (where errors usually are) are kept.
 
 ## License
 

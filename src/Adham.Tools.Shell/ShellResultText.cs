@@ -32,7 +32,7 @@ internal static class ShellResultText
         if (text.Length > 0 && !text.EndsWith('\n'))
             sb.Append('\n');
         if (truncated)
-            sb.Append('[').Append(name).Append(" cut at ").Append(ShellRunner.MaxStreamBytes / 1024)
-              .Append(" KB: narrow the command, or write the output to a file and Read it in parts]\n");
+            sb.Append('[').Append(name).Append(" over ").Append(ShellRunner.MaxStreamBytes / 1024)
+              .Append(" KB: the start and the end are kept, the middle is cut. Narrow the command, or write the output to a file and Read it in parts]\n");
     }
 }

@@ -62,8 +62,26 @@ public sealed class ShellRunnerTests : IDisposable
         var result = await Run(IsPs ? "1..20000 | ForEach-Object { \"line $_\" }" : "seq 1 20000 | sed 's/^/line /'");
 
         result.StdoutTruncated.Should().BeTrue();
-        System.Text.Encoding.UTF8.GetByteCount(result.Stdout).Should().BeLessThanOrEqualTo(ShellRunner.MaxStreamBytes);
+        // The cap plus the one-line marker for the cut.
+        System.Text.Encoding.UTF8.GetByteCount(result.Stdout).Should().BeLessThanOrEqualTo(ShellRunner.MaxStreamBytes + 40);
         result.Stdout.Should().StartWith("line 1\n");
+    }
+
+    [Fact]
+    public async Task HugeOutput_KeepsTheEnd_WhereErrorsUsuallyAre()
+    {
+        var result = await Run(IsPs ? "1..20000 | ForEach-Object { \"line $_\" }" : "seq 1 20000 | sed 's/^/line /'");
+
+        result.Stdout.Should().EndWith("line 20000\n").And.MatchRegex(@"…\[\d+ lines cut\]…\n");
+    }
+
+    [Fact]
+    public async Task OutputUnderTheCap_IsKeptWhole()
+    {
+        var result = await Run(IsPs ? "1..100 | ForEach-Object { \"line $_\" }" : "seq 1 100 | sed 's/^/line /'");
+
+        result.StdoutTruncated.Should().BeFalse();
+        result.Stdout.Should().StartWith("line 1\n").And.EndWith("line 100\n").And.NotContain("lines cut");
     }
 
     [Fact]

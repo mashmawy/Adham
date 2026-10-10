@@ -80,7 +80,7 @@ public sealed class ShellToolTests : IDisposable
     [Fact]
     public void Description_MatchesTheShell()
     {
-        _tool.Description.Should().Contain(_dir).And.Contain("64 KB").And.Contain("refused");
+        _tool.Description.Should().Contain(_dir).And.Contain("16 KB").And.Contain("refused");
         if (IsPs)
             _tool.Description.Should().Contain("PowerShell");
     }
