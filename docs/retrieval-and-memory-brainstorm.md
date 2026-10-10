@@ -59,7 +59,7 @@ Illustrative example, not actual project data:
 ```markdown
 # Mohamed Hassan
 
-- Mohamed Hassan joined Atlas in March 2022.
+- Mohamed Hassan joined Northwind in March 2022.
   Source: staff-directory.md, section “New hires”
 
 - Mohamed Hassan moved from Support to Platform in June 2024.
@@ -301,7 +301,7 @@ The following papers support parts of the design. The discussion reviewed their 
 - Paper: https://arxiv.org/abs/2404.16130
 - Extracts entities and relationships and produces community summaries for answering questions over document collections.
 - Relevance: consolidating information distributed across sources, such as the Mohamed example.
-- Boundary: its graph and global summarization approach is more extensive than the proposed initial grep-based prototype. Entity consolidation ideas can be explored without adopting the full architecture.
+- Boundary: its graph and global summarization approach is more extensive than the proposed initial grep-based version. Entity consolidation ideas can be explored without adopting the full architecture.
 
 ### Chain-of-Verification Reduces Hallucination in Large Language Models
 
