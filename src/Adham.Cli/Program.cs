@@ -49,7 +49,8 @@ using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
 var session = new AgentSession(
     client,
     new ChatOptions { ModelId = model, Tools = tools.AsAITools() },
-    systemPrompt: SystemPrompt.Build(cwd.Path, shell.Name));
+    systemPrompt: SystemPrompt.Build(cwd.Path, shell.Name),
+    contextWindow: served.ContextLength);
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };

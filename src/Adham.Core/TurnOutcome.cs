@@ -4,11 +4,14 @@ namespace Adham.Core;
 
 // How a completed turn ended. Local models sometimes stop without a real answer
 // (cut off, empty, or silent after a tool call); this says which, so it can be fixed.
-public sealed record TurnOutcome(ChatFinishReason? FinishReason, int ToolCalls, bool EndedWithText, int Nudges = 0)
+public sealed record TurnOutcome(ChatFinishReason? FinishReason, int ToolCalls, bool EndedWithText, int Nudges = 0, bool ContextFull = false)
 {
     // A short explanation when the turn didn't end with a plain answer; null when it did.
+    // A full context comes first: then an empty or cut-off reply is a symptom, not the model's choice.
     public string? Note =>
-        FinishReason == ChatFinishReason.Length ? "stopped: the reply hit the output length limit"
+        ContextFull && (!EndedWithText || FinishReason == ChatFinishReason.Length)
+            ? "the context window is full, so the model can't answer any more: type /clear to start over"
+        : FinishReason == ChatFinishReason.Length ? "stopped: the reply hit the output length limit"
         : FinishReason == ChatFinishReason.ContentFilter ? "stopped: the server's content filter"
         : EndedWithText && Nudges > 0 ? "the model went quiet after a tool call; Adham nudged it once to answer"
         : EndedWithText ? null

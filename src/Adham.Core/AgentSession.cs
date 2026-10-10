@@ -9,18 +9,28 @@ public sealed class AgentSession
     private readonly IChatClient _client;
     private readonly ChatOptions _options;
     private readonly List<ChatMessage> _history = [];
+    private readonly int? _contextWindow;
 
     // Sent (once, and never kept in history) when the model runs a tool and then ends its turn without a word.
     public const string AnswerNudge =
         "You ran tools but haven't answered yet. Using the tool results above, answer my previous request now.";
 
-    public AgentSession(IChatClient client, ChatOptions options, string? systemPrompt = null)
+    // Seen live: with the context this full, Unsloth Studio returns an empty or broken reply instead of
+    // an error, and nudging only adds to the context. The count is from the latest call that reported
+    // usage, so the real share is a little higher (the tool results after it aren't counted yet).
+    public const double FullAt = 0.85;
+
+    public AgentSession(IChatClient client, ChatOptions options, string? systemPrompt = null, int? contextWindow = null)
     {
         _client = client;
         _options = options;
+        _contextWindow = contextWindow;
         if (!string.IsNullOrWhiteSpace(systemPrompt))
             _history.Add(new ChatMessage(ChatRole.System, systemPrompt));
     }
+
+    // How much of the context window the conversation takes up (0..1), when both numbers are known.
+    public double? ContextShare => ContextTokens is { } used && _contextWindow is > 0 ? (double)used / _contextWindow.Value : null;
 
     public IReadOnlyList<ChatMessage> History => _history;
 
@@ -73,7 +83,8 @@ public sealed class AgentSession
                 // Seen live: the model runs a tool, gets the result, then stops (finish: stop) without a word.
                 // Nudge it once to answer, and drop the nudge afterwards so the history reads naturally.
                 var soFar = outcome.Result;
-                if (soFar is { ToolCalls: > 0, EndedWithText: false, Nudges: 0 } && soFar.FinishReason != ChatFinishReason.Length)
+                if (soFar is { ToolCalls: > 0, EndedWithText: false, Nudges: 0 } && soFar.FinishReason != ChatFinishReason.Length
+                    && !(ContextShare >= FullAt))
                 {
                     _history.Add(new ChatMessage(ChatRole.User, AnswerNudge));
                     outcome.Nudged();
@@ -83,7 +94,7 @@ public sealed class AgentSession
             }
 
             _history.RemoveAll(m => m.Role == ChatRole.User && m.Text == AnswerNudge);
-            LastTurn = outcome.Result;
+            LastTurn = outcome.Result with { ContextFull = ContextShare >= FullAt };
             completed = true;
         }
         finally

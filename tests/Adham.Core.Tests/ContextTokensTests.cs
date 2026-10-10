@@ -10,11 +10,64 @@ namespace Adham.Core.Tests;
 // is full; it returns an empty or broken reply, so this count is the only warning there is.
 public class ContextTokensTests
 {
-    private static AgentSession Session(Func<IEnumerable<ChatMessage>, IAsyncEnumerable<ChatResponseUpdate>> model)
+    private static AgentSession Session(
+        Func<IEnumerable<ChatMessage>, IAsyncEnumerable<ChatResponseUpdate>> model, int? contextWindow = null)
     {
         var tool = AIFunctionFactory.Create(() => "README.md", "Glob");
         var client = new ChatClientBuilder(new FakeChatClient(model)).UseFunctionInvocation().Build();
-        return new AgentSession(client, new ChatOptions { Tools = [tool] }, systemPrompt: "sys");
+        return new AgentSession(client, new ChatOptions { Tools = [tool] }, systemPrompt: "sys", contextWindow);
+    }
+
+    // Call 1 asks for Glob (with this much context in use); call 2 sees the result and says nothing.
+    private static Func<IEnumerable<ChatMessage>, IAsyncEnumerable<ChatResponseUpdate>> SilentAfterTool(long prompt, List<string> lastMessages) =>
+        messages =>
+        {
+            lastMessages.Add(messages.Last().Text);
+            return messages.Last().Role == ChatRole.User && messages.Last().Text != AgentSession.AnswerNudge
+                ? WithUsage(FakeChatClient.StreamToolCall("call-1", "Glob", []), prompt, completion: 10)
+                : FakeChatClient.StreamTextEndingWith("", ChatFinishReason.ToolCalls);
+        };
+
+    [Fact]
+    public async Task FullContext_EmptyReply_IsNotNudged_AndSaysTheContextIsFull()
+    {
+        var sent = new List<string>();
+        var session = Session(SilentAfterTool(prompt: 1800, sent), contextWindow: 2000);
+
+        await Send(session, "list files");
+
+        sent.Should().NotContain(AgentSession.AnswerNudge);
+        session.LastTurn!.ContextFull.Should().BeTrue();
+        session.LastTurn.Note.Should().Contain("context window is full").And.Contain("/clear");
+    }
+
+    [Fact]
+    public async Task RoomLeft_EmptyReply_IsStillNudged()
+    {
+        var sent = new List<string>();
+        var session = Session(SilentAfterTool(prompt: 500, sent), contextWindow: 2000);
+
+        await Send(session, "list files");
+
+        sent.Should().Contain(AgentSession.AnswerNudge);
+        session.LastTurn!.Note.Should().NotContain("context window is full");
+    }
+
+    [Fact]
+    public async Task FullContext_WithAnAnswer_HasNoNote()
+    {
+        var session = Session(_ => WithUsage(FakeChatClient.StreamText("done"), prompt: 1900, completion: 20), contextWindow: 2000);
+
+        await Send(session, "hello");
+
+        session.LastTurn!.ContextFull.Should().BeTrue();
+        session.LastTurn.Note.Should().BeNull();
+    }
+
+    [Fact]
+    public void ShareOfTheWindow_NeedsBothNumbers()
+    {
+        Session(_ => FakeChatClient.StreamText("hi"), contextWindow: 2000).ContextShare.Should().BeNull();
     }
 
     private static async Task Send(AgentSession session, string text)
