@@ -18,11 +18,10 @@ if (string.IsNullOrWhiteSpace(env.ApiKey))
     return 1;
 }
 
-string model;
+ServerModel served;
 try
 {
-    model = env.Model
-        ?? await ChatClientFactory.GetLoadedModelAsync(env.BaseUrl, env.ApiKey, CancellationToken.None)
+    served = await ChatClientFactory.GetModelAsync(env.BaseUrl, env.ApiKey, env.Model, CancellationToken.None)
         ?? throw new InvalidOperationException("no model is loaded; load one in Unsloth Studio first");
 }
 catch (Exception ex) when (ServerErrors.IsServerError(ex) || ex is InvalidOperationException)
@@ -45,6 +44,7 @@ var tools = new ToolRegistry([
     new AskUserTool(approver),
 ]);
 
+var model = served.Id;
 using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
 var session = new AgentSession(
     client,
@@ -54,7 +54,7 @@ var session = new AgentSession(
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
 
-Console.WriteLine($"adham · {model} @ {env.BaseUrl}");
+Console.WriteLine($"adham · {model}{(served.ContextLength is { } window ? $" ({window:N0}-token context)" : "")} @ {env.BaseUrl}");
 WriteDim($"working in {cwd.Path} · tools: {string.Join(", ", tools.All.Select(t => t.Name))} · /clear to start over · /exit to quit\n");
 while (!cts.IsCancellationRequested)
 {
