@@ -42,26 +42,18 @@ public sealed class AgentSession
     // The server's count is the real one: it includes the tool schemas, which no text estimate sees.
     public long? ContextTokens { get; private set; }
 
-    // Where the latest completed turn starts in the history. Its tool results stay in full for the
-    // next turn, so "continue" or a follow-up question still sees them; older long results become notes.
-    private int? _lastTurnStart;
-
     // Start over: keep the system prompt, forget the conversation (and everything the tools returned).
     public void Clear()
     {
         var keep = _history.Count > 0 && _history[0].Role == ChatRole.System ? 1 : 0;
         _history.RemoveRange(keep, _history.Count - keep);
         ContextTokens = null;
-        _lastTurnStart = null;
     }
 
     public async IAsyncEnumerable<ChatResponseUpdate> SendAsync(
         string text,
         [EnumeratorCancellation] CancellationToken ct)
     {
-        if (_lastTurnStart is { } previous)
-            OldToolResults.Shorten(_history, previous);
-
         var turnStart = _history.Count;
         var tokensBefore = ContextTokens;
         _history.Add(new ChatMessage(ChatRole.User, text));
@@ -103,7 +95,6 @@ public sealed class AgentSession
 
             _history.RemoveAll(m => m.Role == ChatRole.User && m.Text == AnswerNudge);
             LastTurn = outcome.Result with { ContextFull = ContextShare >= FullAt };
-            _lastTurnStart = turnStart;
             completed = true;
         }
         finally

@@ -5,64 +5,92 @@ using Xunit;
 
 namespace Adham.Core.Tests;
 
-// Long tool results from before the previous turn become one-line notes, so file reads
-// don't fill the context for good. The previous turn's results stay for follow-ups.
+// Each model call gets a copy of the conversation where the newest tool rounds stay whole while they
+// fit the budget, and long results in older rounds are notes. Seen live: one turn wrote and read
+// back long documents until the context was full, so this has to work inside a turn too.
 public class OldToolResultsTests
 {
-    private static readonly string LongFile = string.Join('\n', Enumerable.Range(1, 40).Select(i => $"{i,6}→line {i} of the file"));
+    // 2,000 characters, 40 lines: about one medium file.
+    private static readonly string File = string.Join('\n', Enumerable.Range(1, 40).Select(i => $"{i,6}→line {i} of the file, padded to length....."));
 
-    // Each user turn makes the model Read once, then answer. Returns what the model was sent on each call.
-    private static async Task<List<List<ChatMessage>>> RunTurns(int turns, string toolOutput)
+    // One turn: the model reads `reads` files, one per round, then answers. Returns what each call was sent.
+    private static async Task<(List<List<ChatMessage>> Sent, AgentSession Session)> ReadFiles(int reads, int keepChars, string? output = null)
     {
         var sent = new List<List<ChatMessage>>();
-        var read = AIFunctionFactory.Create((string file_path) => toolOutput, "Read");
+        var read = AIFunctionFactory.Create((string file_path) => output ?? File, "Read");
         var calls = 0;
         var model = new FakeChatClient(messages =>
         {
-            var list = messages.ToList();
-            sent.Add(list);
-            return list[^1].Role == ChatRole.User
+            sent.Add(messages.ToList());
+            return calls < reads
                 ? FakeChatClient.StreamToolCall($"call-{++calls}", "Read", new() { ["file_path"] = $"file{calls}.py" })
-                : FakeChatClient.StreamText("read it");
+                : FakeChatClient.StreamText("read them");
         });
-        var client = new ChatClientBuilder(model).UseFunctionInvocation().Build();
+        var client = new ChatClientBuilder(model)
+            .UseFunctionInvocation()
+            .Use(inner => new ShortenedContextClient(inner, keepChars))
+            .Build();
         var session = new AgentSession(client, new ChatOptions { Tools = [read] }, systemPrompt: "sys");
 
-        for (var i = 1; i <= turns; i++)
-            await foreach (var _ in session.SendAsync($"turn {i}", default)) { }
-        return sent;
+        await foreach (var _ in session.SendAsync("read the files", default)) { }
+        return (sent, session);
     }
 
-    private static List<string> Results(List<ChatMessage> messages) =>
-        messages.SelectMany(m => m.Contents.OfType<FunctionResultContent>()).Select(r => r.Result?.ToString() ?? "").ToList();
+    private static List<string> Results(IEnumerable<ChatMessage> messages) =>
+        messages.SelectMany(m => m.Contents.OfType<FunctionResultContent>()).Select(r => OldToolResults.Text(r.Result) ?? "").ToList();
 
     [Fact]
-    public async Task ThirdTurn_SeesTheFirstReadAsANote_AndTheSecondInFull()
+    public async Task LongTurn_ShortensTheOlderRounds_BeforeTheNextCall()
     {
-        var sent = await RunTurns(3, LongFile);
+        // Budget for two files: the last call sees reads 3 and 4 whole, 1 and 2 as notes.
+        var (sent, _) = await ReadFiles(reads: 4, keepChars: 5_000);
 
         var results = Results(sent[^1]);
-        results.Should().HaveCount(3);
+        results.Should().HaveCount(4);
         results[0].Should().Be("[Earlier result of Read(file_path: file1.py): 40 lines, removed to save context. Call Read again if you need it.]");
-        results[1].Should().Contain("line 40 of the file");
-        results[2].Should().Contain("line 40 of the file");
+        results[1].Should().StartWith("[Earlier result of Read(file_path: file2.py)");
+        results[2].Should().Be(File);
+        results[3].Should().Be(File);
     }
 
     [Fact]
-    public async Task SecondTurn_StillSeesTheFirstTurnInFull()
+    public async Task WithinTheBudget_NothingIsShortened()
     {
-        // e.g. "continue" right after a turn: the evidence is still there.
-        var sent = await RunTurns(2, LongFile);
+        var (sent, _) = await ReadFiles(reads: 3, keepChars: 10_000);
 
-        Results(sent[^1]).Should().AllSatisfy(r => r.Should().Contain("line 40 of the file"));
+        Results(sent[^1]).Should().AllBe(File);
+    }
+
+    [Fact]
+    public async Task LatestRound_StaysWhole_EvenOverTheBudget()
+    {
+        // The model needs what it just asked for, however big.
+        var (sent, _) = await ReadFiles(reads: 1, keepChars: 100);
+
+        Results(sent[^1]).Should().Equal(File);
+    }
+
+    [Fact]
+    public async Task TheHistory_KeepsEveryResultWhole()
+    {
+        var (_, session) = await ReadFiles(reads: 4, keepChars: 5_000);
+
+        Results(session.History).Should().HaveCount(4).And.AllBe(File);
     }
 
     [Fact]
     public async Task ShortResults_AreKept()
     {
-        var sent = await RunTurns(3, "Edited calc.py");
+        var (sent, _) = await ReadFiles(reads: 4, keepChars: 10, output: "Edited calc.py");
 
-        Results(sent[^1]).Should().AllSatisfy(r => r.Should().Contain("Edited calc.py"));
+        Results(sent[^1]).Should().AllBe("Edited calc.py");
+    }
+
+    [Fact]
+    public void Budget_IsAFifthOfTheWindow_InCharacters()
+    {
+        ShortenedContextClient.KeepCharsFor(32_768).Should().Be(26_214);
+        ShortenedContextClient.KeepCharsFor(contextWindow: null).Should().Be(26_214);
     }
 
     [Fact]

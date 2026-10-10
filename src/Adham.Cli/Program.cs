@@ -45,7 +45,7 @@ var tools = new ToolRegistry([
 ]);
 
 var model = served.Id;
-using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model);
+using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model, served.ContextLength);
 var session = new AgentSession(
     client,
     new ChatOptions { ModelId = model, Tools = tools.AsAITools() },

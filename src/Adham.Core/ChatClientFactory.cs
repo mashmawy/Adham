@@ -9,12 +9,14 @@ namespace Adham.Core;
 // Any OpenAI-compatible server works: Unsloth Studio, llama.cpp, LM Studio, vLLM, ...
 public static class ChatClientFactory
 {
-    public static IChatClient Build(Uri baseUrl, string apiKey, string modelId)
+    public static IChatClient Build(Uri baseUrl, string apiKey, string modelId, int? contextWindow = null)
     {
         var openAi = CreateClient(baseUrl, apiKey);
         return new ChatClientBuilder(openAi.GetChatClient(modelId).AsIChatClient())
             // The tool loop: when the model asks for a tool, run it, append the result, ask again.
             .UseFunctionInvocation()
+            // Inside the loop, so each call it makes (not only each turn) sends shortened old tool output.
+            .Use(inner => new ShortenedContextClient(inner, ShortenedContextClient.KeepCharsFor(contextWindow)))
             .Build();
     }
 
