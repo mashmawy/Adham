@@ -141,6 +141,26 @@ public class ConsoleApproverTests
     }
 
     [Fact]
+    public async Task AskUser_OptionNumberOutOfRange_AsksAgain()
+    {
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new StringReader("5\n2\n"), output, color: false);
+
+        var answer = await approver.AskUserAsync("Pick one", ["First", "Second", "Third"], CancellationToken.None);
+
+        answer.Should().Be("Second");
+        output.ToString().Should().Contain("Pick 1-3, or type an answer.");
+    }
+
+    [Fact]
+    public async Task AskUser_NumberWithoutOptions_IsTheAnswer()
+    {
+        var answer = await AskUser("42\n", "How many?");
+
+        answer.Should().Be("42");
+    }
+
+    [Fact]
     public async Task AskUser_WithOptionNumberInOutput()
     {
         using var output = new StringWriter();

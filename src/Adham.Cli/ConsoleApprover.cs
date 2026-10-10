@@ -36,21 +36,27 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
             output.Write($"\n    {i + 1}. {options![i]}");
 
         output.Write("\n  > ");
-        var answer = input.ReadLine();
+        while (true)
+        {
+            var answer = input.ReadLine();
 
-        // Without an answer small models tend to make one up, so say what to do instead.
-        if (answer is null)
-            return ValueTask.FromResult($"The user gave no answer (end of input). {DontGuess}");
+            // Without an answer small models tend to make one up, so say what to do instead.
+            if (answer is null)
+                return ValueTask.FromResult($"The user gave no answer (end of input). {DontGuess}");
 
-        var trimmed = answer.Trim();
-        if (trimmed.Length == 0)
-            return ValueTask.FromResult($"The user gave no answer. {DontGuess}");
+            var trimmed = answer.Trim();
+            if (trimmed.Length == 0)
+                return ValueTask.FromResult($"The user gave no answer. {DontGuess}");
 
-        // A number picks that option; anything else is the answer as typed.
-        if (options is not null && options.Length > 0 && int.TryParse(trimmed, out var num) && num >= 1 && num <= options.Length)
-            return ValueTask.FromResult(options[num - 1]);
+            // A number picks that option; a number that isn't one is asked again, since the model
+            // couldn't tell "5" the typo from "5" the answer. Anything else is the answer as typed.
+            if (options is not { Length: > 0 } || !int.TryParse(trimmed, out var num))
+                return ValueTask.FromResult(trimmed);
+            if (num >= 1 && num <= options.Length)
+                return ValueTask.FromResult(options[num - 1]);
 
-        return ValueTask.FromResult(trimmed);
+            output.Write($"  Pick 1-{options.Length}, or type an answer.\n  > ");
+        }
     }
 
     private const string DontGuess = "Don't guess it: continue without it, or stop and say what you need.";
