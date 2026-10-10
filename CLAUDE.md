@@ -20,7 +20,7 @@ Projects so far (dependencies point down):
 - `Adham.Cli`: console chat loop (`adham` executable), registers the tools, prints tool calls; `ServerErrors`; `ConsoleApprover` (diff + y/N before file changes, command + y/N before commands), `DiffText`, `ToolCallText`.
 - `Adham.Tools.Shell`: `ShellTool` (PowerShell on Windows, Bash elsewhere), `ShellRunner` (CliWrap), `CommandSplitter`, `DenyRules`, `ReadOnlyRules`. Every command: deny → read-only → ask via `ICommandApprover`.
 - `Adham.Tools.Files`: `ReadTool`, `EditTool`, `WriteTool`, `FileReadTracker` (read-before-write rules). `Adham.Tools.Search`: `GlobTool`.
-- `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client with `UseFunctionInvocation()`, loaded-model lookup), `AgentSession` (streaming, history including tool calls and results). Core does not reference the tools.
+- `Adham.Core`: `ChatClientFactory` (OpenAI-compatible client with `UseFunctionInvocation()`, loaded-model lookup), `AgentSession` (streaming, history including tool calls and results, `ContextTokens` from the server's usage), `ServerModel` (model id + context length from `/v1/models`). Core does not reference the tools.
 - `Adham.Tools.Abstractions`: `ITool`, `ToolRegistry`, `ToolFunction`, `WorkingDirectory`, `IChangeApprover`/`FileChange`, `ICommandApprover`/`CommandRequest`, `IUserQuestioner`, `AskUserTool`.
 - `Adham.Common`: `AdhamEnvironment` (`ADHAM_API_KEY`, `ADHAM_BASE_URL`, `ADHAM_MODEL`).
 
