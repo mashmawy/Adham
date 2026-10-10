@@ -26,7 +26,8 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         return Ask("  Run this command? [y/N] ");
     }
 
-    // Ctrl+C (a cancelled token) throws, like every other cancelled step; the chat loop then exits.
+    // Ctrl+C (a cancelled token) throws, before or while asking, like every other cancelled step;
+    // the chat loop then exits.
     public ValueTask<string> AskUserAsync(string question, string[]? options, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -39,6 +40,8 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         while (true)
         {
             var answer = input.ReadLine();
+            // ReadLine doesn't watch the token: Ctrl+C while waiting only shows up once it returns.
+            cancellationToken.ThrowIfCancellationRequested();
 
             // Without an answer small models tend to make one up, so say what to do instead.
             if (answer is null)

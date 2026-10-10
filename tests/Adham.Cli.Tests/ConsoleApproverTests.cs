@@ -194,4 +194,26 @@ public class ConsoleApproverTests
         await ask.Should().ThrowAsync<OperationCanceledException>();
         output.ToString().Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task AskUser_CancelledWhileWaiting_Throws()
+    {
+        using var cts = new CancellationTokenSource();
+        using var output = new StringWriter();
+        var approver = new ConsoleApprover(new CtrlCReader(cts), output, color: false);
+
+        var ask = async () => await approver.AskUserAsync("What is it?", null, cts.Token);
+
+        await ask.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    // Ctrl+C while ReadLine waits: the token is cancelled and ReadLine returns no line.
+    private sealed class CtrlCReader(CancellationTokenSource cts) : TextReader
+    {
+        public override string? ReadLine()
+        {
+            cts.Cancel();
+            return null;
+        }
+    }
 }
