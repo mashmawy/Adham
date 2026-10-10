@@ -43,7 +43,7 @@ public sealed class AskUserToolTests
 
         var result = await tool.AskAsync("What's the project name?", cancellationToken: CancellationToken.None);
 
-        result.Should().Be("User response: test answer");
+        result.Should().Be("User response: test answer\nContinue the task with this response.");
         questioner.LastQuestion.Should().Be("What's the project name?");
     }
 
@@ -139,7 +139,7 @@ public sealed class AskUserToolTests
             ["options"] = new[] { "MIT", "Apache-2.0" },
         });
 
-        result.Should().Be("User response: test answer");
+        result.Should().Be("User response: test answer\nContinue the task with this response.");
         questioner.LastOptions.Should().Equal("MIT", "Apache-2.0");
     }
 }

@@ -29,6 +29,8 @@ public sealed class AskUserTool(IUserQuestioner questioner) : ITool
         // Blank options would still get a number on screen.
         var choices = options?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToArray();
         var answer = await questioner.AskUserAsync(question, choices is { Length: > 0 } ? choices : null, cancellationToken).ConfigureAwait(false);
-        return $"User response: {answer}";
+
+        // Seen with other tools: after a result the model sometimes ends its turn without a word.
+        return $"User response: {answer}\nContinue the task with this response.";
     }
 }
