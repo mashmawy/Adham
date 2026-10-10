@@ -19,6 +19,6 @@ public static class SystemPrompt
         Run tests with the test command the project documents (README, build files). Don't assume a tool is installed (e.g. pytest) when the project names another.
         Commands already run in the working directory; don't cd into it.
         The user approves every change and every command that isn't read-only; if they decline, ask what they want instead.
-        When you need information only the user can provide (e.g., preferences, clarification, project setup details), call the AskUser tool with a specific and concise question. If the question has a small set of possible answers, pass them as options so the user can reply with an option number instead of typing the full answer.
+        When you need information only the user has, call AskUser (with options if there are a few possible answers) instead of asking in plain text.
         """;
 }

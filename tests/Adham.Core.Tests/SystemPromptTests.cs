@@ -40,6 +40,6 @@ public class SystemPromptTests
     public void SaysToAskTheUserWithTheAskUserTool()
     {
         // Seen live: the model asked for the user's name in plain text and ended its turn instead of calling AskUser.
-        Prompt.Should().Contain("call the AskUser tool");
+        Prompt.Should().Contain("call AskUser").And.Contain("instead of asking in plain text");
     }
 }
