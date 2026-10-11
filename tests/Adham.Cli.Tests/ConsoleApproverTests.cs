@@ -30,6 +30,7 @@ public class ConsoleApproverTests
     [InlineData("y\n")]
     [InlineData("Y\n")]
     [InlineData("yes\n")]
+    [InlineData("غ\n")] // the Y key with the Arabic keyboard layout on
     public async Task Yes_Approves(string typed)
     {
         (await Ask(typed, Fix)).Approved.Should().BeTrue();
@@ -41,6 +42,7 @@ public class ConsoleApproverTests
     [InlineData("\n")]
     [InlineData("")]
     [InlineData("sure\n")]
+    [InlineData("ن\n")] // the N key with the Arabic keyboard layout on: still a no
     public async Task AnythingElse_Declines(string typed)
     {
         (await Ask(typed, Fix)).Approved.Should().BeFalse();

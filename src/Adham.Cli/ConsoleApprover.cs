@@ -2,7 +2,8 @@ using Adham.Tools.Abstractions;
 
 namespace Adham.Cli;
 
-// Asks the user in the console before a file change or a command. Anything but "y"/"yes" is a no.
+// Asks the user in the console before a file change or a command. Anything but "y"/"yes"
+// (or the Y key on an Arabic layout) is a no.
 internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool color) : IChangeApprover, ICommandApprover, IUserQuestioner
 {
     public static ConsoleApprover ForConsole() => new(Console.In, Console.Out, color: !Console.IsOutputRedirected);
@@ -72,7 +73,9 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
         output.Write(question);
         var answer = input.ReadLine()?.Trim();
         var approved = string.Equals(answer, "y", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(answer, "yes", StringComparison.OrdinalIgnoreCase);
+                    || string.Equals(answer, "yes", StringComparison.OrdinalIgnoreCase)
+                    // Seen live: with the Arabic keyboard layout on, the Y key types "غ", and two approvals were lost.
+                    || answer == "غ";
         output.WriteLine(approved ? "  (approved)" : "  (declined)");
         return ValueTask.FromResult(approved);
     }
