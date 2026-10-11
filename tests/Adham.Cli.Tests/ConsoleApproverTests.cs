@@ -30,7 +30,6 @@ public class ConsoleApproverTests
     [InlineData("y\n")]
     [InlineData("Y\n")]
     [InlineData("yes\n")]
-    [InlineData("غ\n")] // the Y key with the Arabic keyboard layout on
     public async Task Yes_Approves(string typed)
     {
         (await Ask(typed, Fix)).Approved.Should().BeTrue();
@@ -39,14 +38,25 @@ public class ConsoleApproverTests
 
     [Theory]
     [InlineData("n\n")]
-    [InlineData("\n")]
-    [InlineData("")]
-    [InlineData("sure\n")]
-    [InlineData("ن\n")] // the N key with the Arabic keyboard layout on: still a no
-    public async Task AnythingElse_Declines(string typed)
+    [InlineData("No\n")]
+    [InlineData("\n")] // Enter: the N in [y/N]
+    [InlineData("")]   // end of input
+    public async Task No_Declines(string typed)
     {
         (await Ask(typed, Fix)).Approved.Should().BeFalse();
         (await Ask(typed, Tests)).Approved.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("غ\ny\n", true)]  // the Y key with the Arabic keyboard layout on, then y
+    [InlineData("sure\nn\n", false)]
+    [InlineData("ن\n", false)]    // asked again, then end of input: a no
+    public async Task AnythingElse_IsAskedAgain(string typed, bool approved)
+    {
+        var (result, shown) = await Ask(typed, Fix);
+
+        result.Should().Be(approved);
+        shown.Should().Contain("Type y or n").And.Contain("check the keyboard layout");
     }
 
     [Fact]

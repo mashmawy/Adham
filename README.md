@@ -59,7 +59,7 @@ Run it from the folder you want to ask about: that's the agent's working directo
 
 ### Changing files safely
 
-- **You approve every change.** Before `Edit` or `Write` touches a file, Adham shows a diff and asks `Allow this change? [y/N]`. Anything but `y` (or `غ`, the Y key on an Arabic keyboard layout) is a no, and nothing is written.
+- **You approve every change.** Before `Edit` or `Write` touches a file, Adham shows a diff and asks `Allow this change? [y/N]`. `n` or Enter is a no, and nothing is written; any other answer is asked again.
 - **Read before write.** The model can only edit a file it has read this session, and can only replace a whole file it has read in full. If the file changed on disk since it was read, the change is refused until it's read again.
 - **Line endings are kept.** An edit to a CRLF file stays CRLF.
 - Writes are atomic (temp file, then swap), so a crash never leaves a half-written file.

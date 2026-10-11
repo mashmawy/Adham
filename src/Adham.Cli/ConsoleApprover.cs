@@ -2,8 +2,7 @@ using Adham.Tools.Abstractions;
 
 namespace Adham.Cli;
 
-// Asks the user in the console before a file change or a command. Anything but "y"/"yes"
-// (or the Y key on an Arabic layout) is a no.
+// Asks the user in the console before a file change or a command: y approves, n or Enter declines.
 internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool color) : IChangeApprover, ICommandApprover, IUserQuestioner
 {
     public static ConsoleApprover ForConsole() => new(Console.In, Console.Out, color: !Console.IsOutputRedirected);
@@ -68,16 +67,28 @@ internal sealed class ConsoleApprover(TextReader input, TextWriter output, bool 
 
     private const string DontGuess = "Don't guess it: continue without it, or stop and say what you need.";
 
+    // y/yes approves; n/no, Enter (the N in [y/N]) and end of input decline. Anything else is asked
+    // again. Seen live: with the Arabic keyboard layout on, the Y key types "غ", and two approvals
+    // were lost as declines.
     private ValueTask<bool> Ask(string question)
     {
         output.Write(question);
-        var answer = input.ReadLine()?.Trim();
-        var approved = string.Equals(answer, "y", StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(answer, "yes", StringComparison.OrdinalIgnoreCase)
-                    // Seen live: with the Arabic keyboard layout on, the Y key types "غ", and two approvals were lost.
-                    || answer == "غ";
-        output.WriteLine(approved ? "  (approved)" : "  (declined)");
-        return ValueTask.FromResult(approved);
+        while (true)
+        {
+            var answer = input.ReadLine()?.Trim();
+            bool? approved = answer?.ToUpperInvariant() switch
+            {
+                "Y" or "YES" => true,
+                null or "" or "N" or "NO" => false,
+                _ => null,
+            };
+            if (approved is { } decided)
+            {
+                output.WriteLine(decided ? "  (approved)" : "  (declined)");
+                return ValueTask.FromResult(decided);
+            }
+            output.Write($"  Type y or n (\"{answer}\" is neither; check the keyboard layout): ");
+        }
     }
 
     private void Write(ConsoleColor colour, string line)
