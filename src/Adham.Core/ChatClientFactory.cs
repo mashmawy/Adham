@@ -15,6 +15,8 @@ public static class ChatClientFactory
         return new ChatClientBuilder(openAi.GetChatClient(modelId).AsIChatClient())
             // The tool loop: when the model asks for a tool, run it, append the result, ask again.
             .UseFunctionInvocation()
+            // Inside the loop, so a tool call the model wrote as text is run like a real one.
+            .Use(inner => new TextToolCallClient(inner))
             // Inside the loop, so each call it makes (not only each turn) sends shortened old tool output.
             .Use(inner => new ShortenedContextClient(inner, ShortenedContextClient.KeepCharsFor(contextWindow)))
             .Build();
