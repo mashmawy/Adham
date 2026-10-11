@@ -45,7 +45,13 @@ var tools = new ToolRegistry([
 ]);
 
 var model = served.Id;
-using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model, served.ContextLength);
+var atLineStart = true; // so the timing line after a reply starts on a line of its own
+var modelCalls = 0;
+using var client = ChatClientFactory.Build(env.BaseUrl, env.ApiKey, model, served.ContextLength, onModelCall: timing =>
+{
+    modelCalls++;
+    WriteDim($"{(atLineStart ? "" : "\n")}  {TimingText.Format(timing)}\n");
+});
 var session = new AgentSession(
     client,
     new ChatOptions { ModelId = model, Tools = tools.AsAITools() },
@@ -75,6 +81,8 @@ while (!cts.IsCancellationRequested)
     {
         var callNames = new Dictionary<string, string>();
         var contextShown = session.ContextTokens;
+        var turnClock = System.Diagnostics.Stopwatch.StartNew();
+        modelCalls = 0;
         await foreach (var update in session.SendAsync(input, cts.Token))
         {
             foreach (var content in update.Contents)
@@ -97,13 +105,14 @@ while (!cts.IsCancellationRequested)
                     }
                 }
             }
-            Console.Write(update.Text);
+            Write(update.Text);
         }
-        Console.WriteLine();
+        if (!atLineStart)
+            Write("\n");
         if (session.LastTurn?.Note is { } note)
             WriteDim($"  ({note})\n");
-        if (ContextText.Format(session.ContextTokens, served.ContextLength) is { } context)
-            WriteDim($"  {context}\n");
+        var turn = TimingText.Turn(turnClock.Elapsed, modelCalls);
+        WriteDim(ContextText.Format(session.ContextTokens, served.ContextLength) is { } context ? $"  {turn} · {context}\n" : $"  {turn}\n");
     }
     catch (Exception ex) when (ServerErrors.IsServerError(ex))
     {
@@ -118,9 +127,17 @@ while (!cts.IsCancellationRequested)
 }
 return 0;
 
-static void WriteDim(string text)
+void Write(string text)
+{
+    if (text.Length == 0)
+        return;
+    Console.Write(text);
+    atLineStart = text[^1] == '\n';
+}
+
+void WriteDim(string text)
 {
     Console.ForegroundColor = ConsoleColor.DarkGray;
-    Console.Write(text);
+    Write(text);
     Console.ResetColor();
 }
